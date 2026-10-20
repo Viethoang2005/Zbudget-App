@@ -1,8 +1,9 @@
-package com.example.zbudget.components
+package com.example.zbudget.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.StackedBarChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -36,7 +37,7 @@ private val bottomNavItem = listOf(
     BottomNavItem(
         route = Screens.TRANSACTIONS,
         label = "Giao dịch",
-        icon = Icons.Default.Home
+        icon = Icons.Default.Receipt
     ),
     BottomNavItem(
         route = Screens.STAT,
@@ -46,7 +47,7 @@ private val bottomNavItem = listOf(
     BottomNavItem(
         route = Screens.BUDGET,
         label = "Ngân sách",
-        icon = Icons.Default.Person
+        icon = Icons.Default.AccountBalanceWallet
     ),
 )
 

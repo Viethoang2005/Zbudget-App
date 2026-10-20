@@ -17,10 +17,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,8 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.zbudget.data.model.Transaction
-import com.example.zbudget.data.model.TransactionType
+import com.example.zbudget.ui.components.TransactionRow
+import com.example.zbudget.ui.components.formatVnd
 import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetGreenDark
@@ -44,20 +43,14 @@ import com.example.zbudget.ui.theme.ZbudgetGreenLight
 import com.example.zbudget.ui.theme.ZbudgetRed
 import com.example.zbudget.ui.theme.ZbudgetSecondary
 import com.example.zbudget.ui.theme.ZbudgetText
-import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
-
-
-private val BottomTabs = listOf(
-    "Tổng quan",
-    "Giao dịch",
-    "Thống kê",
-    "Ngân sách"
-)
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    onNavigateToTransactions: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -68,18 +61,19 @@ fun HomeScreen(
         if (selectedTab == 0) {
             DashboardContent(
                 uiState = uiState,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                onNavigateToTransactions = onNavigateToTransactions
             )
         }
     }
 }
 
 
-
 @Composable
 private fun DashboardContent(
     uiState: HomeUiState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToTransactions: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier
@@ -95,20 +89,12 @@ private fun DashboardContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Xin chào 👋",
-                        fontSize = 15.sp,
-                        color = ZbudgetSecondary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Quản lý tài chính",
-                        fontSize = 23.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ZbudgetText
-                    )
-                }
+                Text(
+                    text = "Dashboard",
+                    fontSize = 35.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ZbudgetText
+                )
 
                 Box(
                     modifier = Modifier
@@ -116,8 +102,10 @@ private fun DashboardContent(
                         .background(ZbudgetGreenLight, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "S", color = ZbudgetGreenDark,
-                        fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "S", color = ZbudgetGreenDark,
+                        fontSize = 22.sp, fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -163,12 +151,16 @@ private fun DashboardContent(
                     fontWeight = FontWeight.Bold,
                     color = ZbudgetText
                 )
-                Text(
-                    text = "Xem tất cả",
-                    fontSize = 13.sp,
-                    color = ZbudgetGreen,
-                    fontWeight = FontWeight.SemiBold
-                )
+                TextButton(
+                    onClick = onNavigateToTransactions
+                ) {
+                    Text(
+                        text = "Xem tất cả ->",
+                        fontSize = 13.sp,
+                        color = ZbudgetGreen,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
 
@@ -182,7 +174,7 @@ private fun DashboardContent(
             }
         } else {
             items(
-                items = uiState.transactions,
+                items = uiState.transactions.take(5),
                 key = { it.id }
             ) { transaction ->
                 TransactionRow(transaction = transaction)
@@ -196,7 +188,7 @@ private fun DashboardContent(
 }
 
 @Composable
-private fun BalanceCard(amount: Long) {
+private fun BalanceCard(amount: Long, month: String = currentMonthLabel()) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -223,12 +215,23 @@ private fun BalanceCard(amount: Long) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Tháng 10, 2026",
+                text = month,
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 13.sp
             )
         }
     }
+}
+
+private fun currentMonthLabel(): String {
+    val locale = Locale.Builder()
+        .setLanguage("vi")
+        .setRegion("VN")
+        .build()
+    return SimpleDateFormat(
+        "'Tháng' M, yyyy",
+        locale
+    ).format(Date())
 }
 
 @Composable
@@ -282,97 +285,12 @@ private fun SummaryCard(
     }
 }
 
-@Composable
-private fun TransactionRow(transaction: Transaction) {
-    val isIncome = transaction.type == TransactionType.INCOME
-    val iconBackground = if (isIncome) ZbudgetGreenLight else Color(0xFFFFEEEE)
-    val amountColor = if (isIncome) ZbudgetGreen else ZbudgetRed
-    val amountPrefix = if (isIncome) "+" else "−"
-    val symbol = when (transaction.category) {
-        "Ăn uống" -> "🍜"
-        "Di chuyển" -> "🛵"
-        "Học tập" -> "📚"
-        "Thu nhập" -> "💼"
-        "Gia đình" -> "🏠"
-        else -> "💳"
-    }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(18.dp))
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(46.dp)
-                .background(iconBackground, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = symbol, fontSize = 21.sp)
-        }
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 12.dp)
-        ) {
-            Text(
-                text = transaction.title,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp,
-                color = ZbudgetText
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "${transaction.category} • ${transaction.dateLabel}",
-                fontSize = 12.sp,
-                color = ZbudgetSecondary
-            )
-        }
-
-        Text(
-            text = "$amountPrefix${formatVnd(transaction.amount)}",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = amountColor
-        )
-    }
-}
-
-
-
-private fun formatVnd(amount: Long): String {
-    val locale = Locale.Builder()
-        .setLanguage("vi")
-        .setRegion("VN")
-        .build()
-
-    val formatter = NumberFormat.getInstance(locale)
-    return "${formatter.format(amount)} đ"
-}
-@Composable
-private fun ZbudgetTabButton(
-    selected: Boolean,
-    title: String,
-    onClick: () -> Unit
-) {
-    androidx.compose.material3.TextButton(
-        onClick = onClick
-    ) {
-        Text(
-            text = title,
-            color = if (selected) ZbudgetGreenDark else ZbudgetSecondary,
-            fontSize = 11.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     DashboardContent(
-        uiState = HomeUiState()
+        uiState = HomeUiState(),
+        onNavigateToTransactions = {}
     )
 }

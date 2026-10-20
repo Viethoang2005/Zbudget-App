@@ -9,8 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.zbudget.components.BottomBar
+import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
+import com.example.zbudget.ui.transactions.TransactionsScreen
 
 @Composable
 fun AppNavBar(){
@@ -48,7 +49,15 @@ fun AppNavBar(){
             startDestination = Screens.HOME
         ) {
             composable(Screens.HOME) {
-                HomeScreen()
+                HomeScreen(
+                    onNavigateToTransactions = {
+                        navController.navigate(Screens.TRANSACTIONS)
+                    }
+                )
+            }
+
+            composable(Screens.TRANSACTIONS) {
+                TransactionsScreen()
             }
         }
     }
