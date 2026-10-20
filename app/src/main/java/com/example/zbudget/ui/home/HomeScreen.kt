@@ -64,53 +64,10 @@ fun HomeScreen(
 
     Scaffold(
         containerColor = ZbudgetCream,
-        bottomBar = {
-            Surface(
-                color = Color.White,
-                shadowElevation = 8.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BottomTabs.forEachIndexed { index, title ->
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(
-                                    color = if (selectedTab == index) {
-                                        ZbudgetGreenLight
-                                    } else {
-                                        Color.Transparent
-                                    },
-                                    shape = RoundedCornerShape(14.dp)
-                                )
-                                .padding(vertical = 8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-
-                            ZbudgetTabButton(
-                                selected = selectedTab == index,
-                                title = title,
-                                onClick = { selectedTab = index }
-                            )
-                        }
-                    }
-                }
-            }
-        }
     ) { innerPadding ->
         if (selectedTab == 0) {
             DashboardContent(
                 uiState = uiState,
-                modifier = Modifier.padding(innerPadding)
-            )
-        } else {
-            PlaceholderTab(
-                title = BottomTabs[selectedTab],
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -384,32 +341,7 @@ private fun TransactionRow(transaction: Transaction) {
     }
 }
 
-@Composable
-private fun PlaceholderTab(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = ZbudgetGreenDark,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Màn hình này sẽ được xây dựng ở bước tiếp theo.",
-                color = ZbudgetSecondary
-            )
-        }
-    }
-}
+
 
 private fun formatVnd(amount: Long): String {
     val locale = Locale.Builder()
