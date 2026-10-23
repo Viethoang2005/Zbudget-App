@@ -50,7 +50,8 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    onNavigateToTransactions: () -> Unit
+    onNavigateToTransactions: () -> Unit,
+    onItemClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -62,7 +63,8 @@ fun HomeScreen(
             DashboardContent(
                 uiState = uiState,
                 modifier = Modifier.padding(innerPadding),
-                onNavigateToTransactions = onNavigateToTransactions
+                onNavigateToTransactions = onNavigateToTransactions,
+                onItemClick = onItemClick
             )
         }
     }
@@ -73,7 +75,8 @@ fun HomeScreen(
 private fun DashboardContent(
     uiState: HomeUiState,
     modifier: Modifier = Modifier,
-    onNavigateToTransactions: () -> Unit
+    onNavigateToTransactions: () -> Unit,
+    onItemClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = modifier
@@ -177,7 +180,11 @@ private fun DashboardContent(
                 items = uiState.transactions.take(5),
                 key = { it.id }
             ) { transaction ->
-                TransactionRow(transaction = transaction)
+                TransactionRow(
+                    transaction = transaction
+                ) {
+                    onItemClick(transaction.id)
+                }
             }
         }
 
@@ -291,6 +298,7 @@ private fun SummaryCard(
 fun HomeScreenPreview() {
     DashboardContent(
         uiState = HomeUiState(),
-        onNavigateToTransactions = {}
+        onNavigateToTransactions = {},
+        onItemClick = {_ -> }
     )
 }

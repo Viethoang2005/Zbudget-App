@@ -5,4 +5,5 @@ object Screens {
     const val TRANSACTIONS = "transactions"
     const val STAT = "stat"
     const val BUDGET = "budget"
+    const val TRANSACTION_DETAIL = "transaction_detail"
 }

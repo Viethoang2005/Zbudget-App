@@ -8,4 +8,7 @@ class TransactionRepository @Inject constructor() {
     fun getTransactions() : List<Transaction> {
         return FakeTransactions.transactions
     }
+    fun getTransactionById(id: String): Transaction? {
+        return FakeTransactions.transactions.find { it.id == id }
+    }
 }

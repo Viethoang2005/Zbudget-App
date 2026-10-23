@@ -11,7 +11,9 @@ object FakeTransactions {
             amount = 45000L,
             type = TransactionType.EXPENSE,
             category = "Ăn uống",
-            dateLabel = "Hôm nay"
+            dateLabel = "Hôm nay",
+            timeLabel = "12:30",
+            note = "Ăn trưa cùng bạn bè"
         ),
         Transaction(
             id = "2",
@@ -19,7 +21,9 @@ object FakeTransactions {
             amount = 2500000L,
             type = TransactionType.INCOME,
             category = "Thu nhập",
-            dateLabel = "Hôm nay"
+            dateLabel = "Hôm nay",
+            timeLabel = "15:00",
+            note = "Lương tháng"
         ),
         Transaction(
             id = "3",
@@ -27,7 +31,9 @@ object FakeTransactions {
             amount = 5000L,
             type = TransactionType.EXPENSE,
             category = "Di chuyển",
-            dateLabel = "Hôm nay"
+            dateLabel = "Hôm nay",
+            timeLabel = "7:00",
+            note = ""
         ),
         Transaction(
             id = "4",
@@ -35,7 +41,9 @@ object FakeTransactions {
             amount = 120000L,
             type = TransactionType.EXPENSE,
             category = "Học tập",
-            dateLabel = "Hôm qua"
+            dateLabel = "Hôm qua",
+            timeLabel = "9:00",
+            note = ""
         ),
         Transaction(
             id = "5",
@@ -43,7 +51,9 @@ object FakeTransactions {
             amount = 1500000L,
             type = TransactionType.INCOME,
             category = "Gia đình",
-            dateLabel = "18/10/2026"
+            dateLabel = "18/10/2026",
+            timeLabel = "11:00",
+            note = ""
         ),
         Transaction(
             id = "6",
@@ -51,7 +61,9 @@ object FakeTransactions {
             amount = 35000L,
             type = TransactionType.EXPENSE,
             category = "Ăn uống",
-            dateLabel = "17/10/2026"
+            dateLabel = "17/10/2026",
+            timeLabel = "20:00",
+            note = ""
         )
     )
 }
