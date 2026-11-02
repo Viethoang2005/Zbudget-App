@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -65,6 +66,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun TransactionsScreen(
     onTransactionClick: (String) -> Unit,
+    onAddClick: () -> Unit,
     viewModel: TransactionsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,7 +83,8 @@ fun TransactionsScreen(
         onApplyFilter = viewModel::applyFilter,
         onResetDraftFilter = viewModel::resetDraftFilter,
         onClearFilters = viewModel::clearFilters,
-        onTransactionClick = onTransactionClick
+        onTransactionClick = onTransactionClick,
+        onAddClick = onAddClick
     )
 }
 
@@ -97,7 +100,8 @@ fun TransactionsScreenContent(
     onApplyFilter: () -> Unit,
     onResetDraftFilter: () -> Unit,
     onClearFilters: () -> Unit,
-    onTransactionClick: (String) -> Unit
+    onTransactionClick: (String) -> Unit,
+    onAddClick: () -> Unit
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -244,6 +248,12 @@ fun TransactionsScreenContent(
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onAddClick) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Thêm giao dịch"
+                    )
+                }
                     IconButton(
                         onClick = {
                             onFilterDraftChanged(appliedFilter)
@@ -628,7 +638,8 @@ fun TransactionScreenPreview() {
             onApplyFilter = {},
             onResetDraftFilter = {},
             onClearFilters = {},
-            onTransactionClick = {}
+            onTransactionClick = {},
+            onAddClick = {}
         )
     }
 }

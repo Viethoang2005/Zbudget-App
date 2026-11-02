@@ -1,3 +1,4 @@
+
 package com.example.zbudget.navigation
 
 import androidx.compose.foundation.layout.padding
@@ -16,12 +17,13 @@ import androidx.navigation.navArgument
 import com.example.zbudget.navigation.Screens.TRANSACTION_DETAIL
 import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
+import com.example.zbudget.ui.transactions.AddEditTransactionScreen
 import com.example.zbudget.ui.transactions.TransactionDetailScreen
 import com.example.zbudget.ui.transactions.TransactionsScreen
 import com.example.zbudget.ui.transactions.TransactionsViewModel
 
 @Composable
-fun AppNavBar(){
+fun AppNavBar() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -33,22 +35,23 @@ fun AppNavBar(){
         Screens.STAT,
         Screens.BUDGET
     )
+
     Scaffold(
         bottomBar = {
-            if(showBottomBar) {
+            if (showBottomBar) {
                 BottomBar(
                     currentDestination = currentDestination,
                     onNavigate = { route ->
                         navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId)
-                            { inclusive = true}
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
                         }
                     }
                 )
             }
         }
-    ) {
-        innerPadding ->
+    ) { innerPadding ->
         NavHost(
             modifier = Modifier.padding(innerPadding),
             navController = navController,
@@ -61,7 +64,7 @@ fun AppNavBar(){
                     },
                     onItemClick = { transactionId ->
                         navController.navigate(
-                            "${TRANSACTION_DETAIL}/$transactionId"
+                            "$TRANSACTION_DETAIL/$transactionId"
                         )
                     }
                 )
@@ -69,26 +72,58 @@ fun AppNavBar(){
 
             composable(Screens.TRANSACTIONS) {
                 TransactionsScreen(
+                    onAddClick = {
+                        navController.navigate("addTransaction")
+                    },
                     onTransactionClick = { transactionId ->
                         navController.navigate(
-                            "transaction_detail/$transactionId"
+                            "$TRANSACTION_DETAIL/$transactionId"
                         )
                     }
                 )
             }
 
+            composable("addTransaction") {
+                AddEditTransactionScreen(
+                    transactionId = null,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
             composable(
-                route = "${TRANSACTION_DETAIL}/{transactionId}",
+                route = "editTransaction/{transactionId}",
+                arguments = listOf(
+                    navArgument("transactionId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val transactionId = backStackEntry.arguments
+                    ?.getString("transactionId")
+
+                AddEditTransactionScreen(
+                    transactionId = transactionId,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(
+                route = "$TRANSACTION_DETAIL/{transactionId}",
                 arguments = listOf(
                     navArgument("transactionId") {
                         type = NavType.StringType
                     }
                 )
             ) { entry ->
-                val transactionId =
-                    entry.arguments?.getString("transactionId")
+                val transactionId = entry.arguments
+                    ?.getString("transactionId")
 
                 val viewModel: TransactionsViewModel = hiltViewModel()
+
                 val transaction = transactionId?.let {
                     viewModel.getTransactionById(it)
                 }
@@ -97,6 +132,15 @@ fun AppNavBar(){
                     TransactionDetailScreen(
                         transaction = transaction,
                         onBack = {
+                            navController.popBackStack()
+                        },
+                        onEdit = { selectedTransaction ->
+                            navController.navigate(
+                                "editTransaction/${selectedTransaction.id}"
+                            )
+                        },
+                        onDelete = { selectedTransaction ->
+                            viewModel.deleteTransaction(selectedTransaction.id)
                             navController.popBackStack()
                         }
                     )

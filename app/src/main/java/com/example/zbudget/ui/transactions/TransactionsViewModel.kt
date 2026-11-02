@@ -1,6 +1,7 @@
 package com.example.zbudget.ui.transactions
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.data.repository.TransactionRepository
@@ -13,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 data class TransactionsUiState(
     val transactions: List<Transaction> = emptyList(),
@@ -35,17 +38,19 @@ class TransactionsViewModel @Inject constructor(
     val uiState: StateFlow<TransactionsUiState> =
         _uiState.asStateFlow()
 
-    private val allTransactions = repository.getTransactions()
-
     init {
-        _uiState.update {
-            it.copy(
-                categories = listOf("Tất cả danh mục") +
-                        allTransactions.map { transaction ->
-                            transaction.category
-                        }.distinct().sorted()
-            )
+        viewModelScope.launch {
+            repository.transactions.collect { transactions ->
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        transactions = transactions,
+                        categories = listOf("Tất cả danh mục") +
+                                transactions.map { it.category }.distinct()
+                    )
+                }
+            }
         }
+
     }
 
     fun getTransactionById(id: String): Transaction? {
@@ -130,7 +135,7 @@ class TransactionsViewModel @Inject constructor(
 
         val filter = state.appliedFilter
 
-        return allTransactions
+        return state.transactions
             .filter { transaction ->
                 val date = transactionDate(transaction)
                 val query = state.searchQuery.trim()
@@ -193,5 +198,17 @@ class TransactionsViewModel @Inject constructor(
                         }
                 }
             }
+    }
+    fun addTransaction(transaction: Transaction) {
+        repository.addTransaction(transaction)
+    }
+    fun updateTransaction(transaction: Transaction) {
+        repository.updateTransaction(transaction)
+    }
+    fun deleteTransaction(id: String) {
+        repository.deleteTransaction(id)
+    }
+    fun generateTransactionId(): String {
+        return UUID.randomUUID().toString()
     }
 }
