@@ -1,5 +1,7 @@
 package com.example.zbudget.ui.transactions
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -27,6 +30,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -164,7 +168,20 @@ fun TransactionsScreenContent(
         }
     }
     Scaffold(
-        containerColor = ZbudgetCream
+        containerColor = ZbudgetCream,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddClick,
+                containerColor = ZbudgetGreen,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Thêm giao dịch"
+                )
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -270,12 +287,6 @@ fun TransactionsScreenContent(
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onAddClick) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Thêm giao dịch"
-                        )
-                    }
                     IconButton(
                         onClick = {
                             onFilterDraftChanged(appliedFilter)
@@ -434,8 +445,6 @@ fun TransactionsScreenContent(
                     }
                 )
             } else {
-
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -455,53 +464,85 @@ fun TransactionsScreenContent(
                     Text(
                         text = "Khoảng thời gian",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = ZbudgetGreenDark
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(
-                            onClick = {
-                                showDateMenu = true
-                                showCategoryPicker = false
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp),
-                            shape = RoundedCornerShape(12.dp)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Text(
-                                text = draftFilter.dateFilter.label,
-                                modifier = Modifier.weight(1f)
+                            DateFilterOption(
+                                title = "Tất cả thời gian",
+                                subtitle = "Không giới hạn",
+                                icon = "📅",
+                                selected = draftFilter.dateFilter == TransactionDateFilter.ALL,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    onFilterDraftChanged(
+                                        draftFilter.copy(
+                                            dateFilter = TransactionDateFilter.ALL
+                                        )
+                                    )
+                                }
                             )
 
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Chọn khoảng thời gian"
+                            DateFilterOption(
+                                title = "7 ngày qua",
+                                subtitle = "Tuần gần nhất",
+                                icon = "🗓️",
+                                selected = draftFilter.dateFilter == TransactionDateFilter.LAST_7_DAYS,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    onFilterDraftChanged(
+                                        draftFilter.copy(
+                                            dateFilter = TransactionDateFilter.LAST_7_DAYS
+                                        )
+                                    )
+                                }
                             )
                         }
 
-                        DropdownMenu(
-                            expanded = showDateMenu,
-                            onDismissRequest = {
-                                showDateMenu = false
-                            },
-                            modifier = Modifier.fillMaxWidth(0.85f)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            TransactionDateFilter.entries.forEach { option ->
-                                DropdownMenuItem(
-                                    text = { Text(option.label) },
-                                    onClick = {
-                                        onFilterDraftChanged(
-                                            draftFilter.copy(dateFilter = option)
+                            DateFilterOption(
+                                title = "Tháng này",
+                                subtitle = "Từ đầu tháng",
+                                icon = "📆",
+                                selected = draftFilter.dateFilter == TransactionDateFilter.THIS_MONTH,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    onFilterDraftChanged(
+                                        draftFilter.copy(
+                                            dateFilter = TransactionDateFilter.THIS_MONTH
                                         )
-                                        showDateMenu = false
-                                    }
-                                )
-                            }
+                                    )
+                                }
+                            )
+
+                            DateFilterOption(
+                                title = "Tháng trước",
+                                subtitle = "Tháng liền trước",
+                                icon = "🕒",
+                                selected = draftFilter.dateFilter == TransactionDateFilter.LAST_MONTH,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    onFilterDraftChanged(
+                                        draftFilter.copy(
+                                            dateFilter = TransactionDateFilter.LAST_MONTH
+                                        )
+                                    )
+                                }
+                            )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -635,6 +676,74 @@ fun TransactionsScreenContent(
                     }
                 }
             }
+        }
+    }
+}
+@Composable
+fun DateFilterOption(
+    title: String,
+    subtitle: String,
+    icon: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) {
+            ZbudgetGreen.copy(alpha = 0.10f)
+        } else {
+            Color.White
+        },
+        border = BorderStroke(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = if (selected) {
+                ZbudgetGreen
+            } else {
+                Color.LightGray.copy(alpha = 0.4f)
+            }
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                horizontal = 12.dp,
+                vertical = 14.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = icon,
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                if (selected) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Đang chọn",
+                        tint = ZbudgetGreen
+                    )
+                }
+            }
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = ZbudgetGreenDark
+            )
+
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
