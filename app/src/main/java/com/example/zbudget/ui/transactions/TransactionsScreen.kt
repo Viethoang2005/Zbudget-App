@@ -55,6 +55,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.zbudget.data.model.Transaction
+import com.example.zbudget.data.model.TransactionCategories
+import com.example.zbudget.ui.components.CategoryOption
+import com.example.zbudget.ui.components.CategorySelectionContent
 import com.example.zbudget.ui.components.TransactionRow
 import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
@@ -106,7 +109,7 @@ fun TransactionsScreenContent(
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
     var showDateMenu by remember { mutableStateOf(false) }
-    var showCategoryMenu by remember { mutableStateOf(false) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -135,9 +138,26 @@ fun TransactionsScreenContent(
             add("Đến ${appliedFilter.maxAmount}đ")
         }
     }
+    val categoryOptions = remember(categories) {
+        val allCategories = (
+                TransactionCategories.expense +
+                        TransactionCategories.income
+                ).distinctBy { it.name }
+
+        val uniqueCategories = categories.distinct()
+
+        listOf(
+            CategoryOption("Tất cả danh mục", "📋")
+        ) + uniqueCategories
+            .filterNot { it == "Tất cả danh mục" }
+            .map { categoryName ->
+                allCategories.find { it.name == categoryName }
+                    ?: CategoryOption(categoryName, "📦")
+            }
+    }
 
     LaunchedEffect(showSearch) {
-        if(showSearch) {
+        if (showSearch) {
             delay(100.milliseconds)
             focusRequester.requestFocus()
             keyboardController?.show()
@@ -169,7 +189,7 @@ fun TransactionsScreenContent(
                 IconButton(
                     onClick = {
                         showSearch = !showSearch
-                        if(!showSearch) {
+                        if (!showSearch) {
                             keyboardController?.hide()
                             onSearchQueryChanged("")
                         }
@@ -187,7 +207,9 @@ fun TransactionsScreenContent(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchQueryChanged,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester = focusRequester),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester = focusRequester),
                     singleLine = true,
                     label = {
                         Text("Tìm tên giao dịch hoặc ghi chú")
@@ -249,11 +271,11 @@ fun TransactionsScreenContent(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onAddClick) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Thêm giao dịch"
-                    )
-                }
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Thêm giao dịch"
+                        )
+                    }
                     IconButton(
                         onClick = {
                             onFilterDraftChanged(appliedFilter)
@@ -396,91 +418,104 @@ fun TransactionsScreenContent(
             onDismissRequest = {
                 showFilterSheet = false
                 showDateMenu = false
-                showCategoryMenu = false
+                showCategoryPicker = false
             },
             containerColor = ZbudgetCream
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 24.dp)
-            ) {
-                Text(
-                    text = "Bộ lọc giao dịch",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = ZbudgetGreenDark
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Khoảng thời gian",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(
-                        onClick = {
-                            showDateMenu = true
-                            showCategoryMenu = false
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = draftFilter.dateFilter.label,
-                            modifier = Modifier.weight(1f)
+            if (showCategoryPicker) {
+                CategorySelectionContent(
+                    categories = categoryOptions,
+                    selectedCategory = draftFilter.category,
+                    onCategorySelected = { selectedCategory ->
+                        onFilterDraftChanged(
+                            draftFilter.copy(category = selectedCategory)
                         )
-
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Chọn khoảng thời gian"
-                        )
+                        showCategoryPicker = false
                     }
+                )
+            } else {
 
-                    DropdownMenu(
-                        expanded = showDateMenu,
-                        onDismissRequest = {
-                            showDateMenu = false
-                        },
-                        modifier = Modifier.fillMaxWidth(0.85f)
-                    ) {
-                        TransactionDateFilter.entries.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option.label) },
-                                onClick = {
-                                    onFilterDraftChanged(
-                                        draftFilter.copy(dateFilter = option)
-                                    )
-                                    showDateMenu = false
-                                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 24.dp)
+                ) {
+                    Text(
+                        text = "Bộ lọc giao dịch",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = ZbudgetGreenDark
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Text(
+                        text = "Khoảng thời gian",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = {
+                                showDateMenu = true
+                                showCategoryPicker = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = draftFilter.dateFilter.label,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Chọn khoảng thời gian"
                             )
                         }
+
+                        DropdownMenu(
+                            expanded = showDateMenu,
+                            onDismissRequest = {
+                                showDateMenu = false
+                            },
+                            modifier = Modifier.fillMaxWidth(0.85f)
+                        ) {
+                            TransactionDateFilter.entries.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option.label) },
+                                    onClick = {
+                                        onFilterDraftChanged(
+                                            draftFilter.copy(dateFilter = option)
+                                        )
+                                        showDateMenu = false
+                                    }
+                                )
+                            }
+                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                Text(
-                    text = "Danh mục",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                    Text(
+                        text = "Danh mục",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = {
-                            showCategoryMenu = true
+                            showCategoryPicker = true
                             showDateMenu = false
                         },
                         modifier = Modifier
@@ -499,124 +534,104 @@ fun TransactionsScreenContent(
                         )
                     }
 
-                    DropdownMenu(
-                        expanded = showCategoryMenu,
-                        onDismissRequest = {
-                            showCategoryMenu = false
-                        },
-                        modifier = Modifier.fillMaxWidth(0.85f)
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category) },
-                                onClick = {
-                                    onFilterDraftChanged(
-                                        draftFilter.copy(category = category)
-                                    )
-                                    showCategoryMenu = false
-                                }
-                            )
-                        }
-                    }
-                }
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Khoảng tiền (VNĐ)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = draftFilter.minAmount,
-                        onValueChange = { value ->
-                            if (value.all { it.isDigit() }) {
-                                onFilterDraftChanged(
-                                    draftFilter.copy(minAmount = value)
-                                )
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        label = { Text("Từ") },
-                        placeholder = { Text("0") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = draftFilter.maxAmount,
-                        onValueChange = { value ->
-                            if (value.all { it.isDigit() }) {
-                                onFilterDraftChanged(
-                                    draftFilter.copy(maxAmount = value)
-                                )
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        label = { Text("Đến") },
-                        placeholder = { Text("Không giới hạn") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-
-                val minAmount = draftFilter.minAmount.toLongOrNull()
-                val maxAmount = draftFilter.maxAmount.toLongOrNull()
-
-                val invalidRange =
-                    minAmount != null &&
-                            maxAmount != null &&
-                            minAmount > maxAmount
-
-                if (invalidRange) {
                     Text(
-                        text = "Số tiền tối thiểu phải nhỏ hơn hoặc bằng số tiền tối đa.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp)
+                        text = "Khoảng tiền (VNĐ)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TextButton(
-                        onClick = {
-                            onResetDraftFilter()
-                            showDateMenu = false
-                            showCategoryMenu = false
-                        },
-                        modifier = Modifier.weight(1f)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text("Đặt lại")
+                        OutlinedTextField(
+                            value = draftFilter.minAmount,
+                            onValueChange = { value ->
+                                if (value.all { it.isDigit() }) {
+                                    onFilterDraftChanged(
+                                        draftFilter.copy(minAmount = value)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            label = { Text("Từ") },
+                            placeholder = { Text("0") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        OutlinedTextField(
+                            value = draftFilter.maxAmount,
+                            onValueChange = { value ->
+                                if (value.all { it.isDigit() }) {
+                                    onFilterDraftChanged(
+                                        draftFilter.copy(maxAmount = value)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            label = { Text("Đến") },
+                            placeholder = { Text("Không giới hạn") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
                     }
 
-                    Button(
-                        onClick = {
-                            if (!invalidRange) {
-                                onApplyFilter()
-                                showFilterSheet = false
-                                showDateMenu = false
-                                showCategoryMenu = false
-                            }
-                        },
-                        enabled = !invalidRange,
-                        modifier = Modifier.weight(2f),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ZbudgetGreen
+                    val minAmount = draftFilter.minAmount.toLongOrNull()
+                    val maxAmount = draftFilter.maxAmount.toLongOrNull()
+
+                    val invalidRange =
+                        minAmount != null &&
+                                maxAmount != null &&
+                                minAmount > maxAmount
+
+                    if (invalidRange) {
+                        Text(
+                            text = "Số tiền tối thiểu phải nhỏ hơn hoặc bằng số tiền tối đa.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text("Áp dụng")
+                        TextButton(
+                            onClick = {
+                                onResetDraftFilter()
+                                showDateMenu = false
+                                showCategoryPicker = false
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Đặt lại")
+                        }
+
+                        Button(
+                            onClick = {
+                                if (!invalidRange) {
+                                    onApplyFilter()
+                                    showFilterSheet = false
+                                    showDateMenu = false
+                                    showCategoryPicker = false
+                                }
+                            },
+                            enabled = !invalidRange,
+                            modifier = Modifier.weight(2f),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ZbudgetGreen
+                            )
+                        ) {
+                            Text("Áp dụng")
+                        }
                     }
                 }
             }

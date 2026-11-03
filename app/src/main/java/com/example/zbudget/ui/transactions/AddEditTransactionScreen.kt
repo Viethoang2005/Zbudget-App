@@ -16,16 +16,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +43,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,17 +51,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.zbudget.data.model.Transaction
+import com.example.zbudget.data.model.TransactionCategories
 import com.example.zbudget.data.model.TransactionType
+import com.example.zbudget.ui.components.CategoryOption
+import com.example.zbudget.ui.components.CategorySelectionSheet
+import com.example.zbudget.ui.theme.ZbudgetCream
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
@@ -79,31 +85,72 @@ fun AddEditTransactionScreen(
         mutableStateOf(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
     }
     var timeLabel by remember {
-        mutableStateOf(java.time.LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
+        mutableStateOf(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
     }
     var note by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
 
-    var categoryExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var submitted by remember { mutableStateOf(false) }
 
-    val categories = remember(uiState.categories) {
-        (
-                uiState.categories.filter { it != "Tất cả danh mục" } +
-                        listOf(
-                            "Ăn uống",
-                            "Di chuyển",
-                            "Mua sắm",
-                            "Học tập",
-                            "Giải trí",
-                            "Gia đình",
-                            "Lương",
-                            "Thưởng",
-                            "Khác"
-                        )
-                ).distinct()
+    val parsedAmount = amount.toLongOrNull()
+
+    val validDate = runCatching {
+        LocalDate.parse(
+            dateLabel,
+            DateTimeFormatter.ofPattern("dd/MM/uuuu")
+                .withResolverStyle(ResolverStyle.STRICT)
+        )
+    }.isSuccess
+
+    val validTime = runCatching {
+        LocalTime.parse(
+            timeLabel,
+            DateTimeFormatter.ofPattern("HH:mm")
+        )
+    }.isSuccess
+
+    val titleError = if (submitted && title.isBlank()) {
+        "Vui lòng nhập tên giao dịch"
+    } else {
+        null
+    }
+
+    val amountError = if (submitted && (parsedAmount == null || parsedAmount <= 0L)) {
+        "Số tiền phải lớn hơn 0"
+    } else {
+        null
+    }
+
+    val categoryError = if (submitted && category.isBlank()) {
+        "Vui lòng chọn danh mục"
+    } else {
+        null
+    }
+
+    val dateError = if (submitted && !validDate) {
+        "Ngày giao dịch không hợp lệ"
+    } else {
+        null
+    }
+
+    val timeError = if (submitted && !validTime) {
+        "Giờ giao dịch không hợp lệ"
+    } else {
+        null
+    }
+
+    var showCategorySheet by remember { mutableStateOf(false) }
+
+    val categoryOptions = remember(selectedType, category) {
+        val categories = TransactionCategories.getCategories(selectedType)
+
+        if (category.isNotBlank() && categories.none {it.name == category }) {
+            categories + CategoryOption(category, "\uD83D\uDCE6")
+        } else {
+            categories
+        }
     }
 
     LaunchedEffect(transactionId) {
@@ -148,7 +195,7 @@ fun AddEditTransactionScreen(
     )
 
     Scaffold(
-        containerColor = colors.background,
+        containerColor = ZbudgetCream,
         topBar = {
             Row(
                 modifier = Modifier
@@ -179,37 +226,16 @@ fun AddEditTransactionScreen(
             ) {
                 Button(
                     onClick = {
-                        val parsedAmount = amount
-                            .replace(",", "")
-                            .replace(".", "")
-                            .toLongOrNull()
+                        submitted = true
 
-                        val validDate = runCatching {
-                            LocalDate.parse(
-                                dateLabel,
-                                DateTimeFormatter.ofPattern("dd/MM/uuuu")
-                                    .withResolverStyle(ResolverStyle.STRICT)
-                            )
-                        }.isSuccess
+                        val isValid = title.isNotBlank() &&
+                                parsedAmount != null &&
+                                parsedAmount > 0L &&
+                                category.isNotBlank() &&
+                                validDate &&
+                                validTime
 
-                        val validTime = runCatching {
-                            java.time.LocalTime.parse(
-                                timeLabel,
-                                DateTimeFormatter.ofPattern("HH:mm")
-                            )
-                        }.isSuccess
-
-                        errorMessage = when {
-                            title.isBlank() -> "Vui lòng nhập tên giao dịch"
-                            parsedAmount == null || parsedAmount <= 0L ->
-                                "Vui lòng nhập số tiền hợp lệ"
-                            category.isBlank() -> "Vui lòng chọn danh mục"
-                            !validDate -> "Ngày không hợp lệ"
-                            !validTime -> "Giờ không hợp lệ"
-                            else -> null
-                        }
-
-                        if (errorMessage == null && parsedAmount != null) {
+                        if (isValid) {
                             val transaction = Transaction(
                                 id = transactionId ?: viewModel.generateTransactionId(),
                                 title = title.trim(),
@@ -273,6 +299,7 @@ fun AddEditTransactionScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         selectedType = TransactionType.EXPENSE
+                        category = TransactionCategories.expense.first().name
                     }
 
                     TypeOption(
@@ -282,6 +309,8 @@ fun AddEditTransactionScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         selectedType = TransactionType.INCOME
+                        category = TransactionCategories.income.first().name
+
                     }
                 }
             }
@@ -295,23 +324,29 @@ fun AddEditTransactionScreen(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Ví dụ: Ăn trưa, mua sách...") },
                     singleLine = true,
+                    isError = titleError != null,
                     shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = colors.primary
                     )
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                FormError(titleError)
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 FormLabel("Số tiền")
 
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { amount = it.filter { char -> char.isDigit() } },
+                    onValueChange = {
+                        amount = it.filter { char -> char.isDigit() }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Nhập số tiền") },
                     suffix = { Text("đ") },
                     singleLine = true,
+                    isError = amountError != null,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number
                     ),
@@ -321,53 +356,21 @@ fun AddEditTransactionScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                FormError(amountError)
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 FormLabel("Danh mục")
 
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = category,
-                        onValueChange = {},
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true,
-                        singleLine = true,
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = null
-                            )
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = colors.primary
-                        )
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clickable { categoryExpanded = true }
-                    )
-
-                    DropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false },
-                        modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .background(colors.surface)
-                    ) {
-                        categories.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(item) },
-                                onClick = {
-                                    category = item
-                                    categoryExpanded = false
-                                }
-                            )
-                        }
-                    }
+                SelectableField(
+                    value = category,
+                    icon = Icons.Default.Category,
+                    isError = categoryError != null,
+                    errorMessage = categoryError
+                ) {
+                    showCategorySheet = true
                 }
+
             }
 
             FormSection(title = "Thời gian") {
@@ -375,18 +378,22 @@ fun AddEditTransactionScreen(
 
                 SelectableField(
                     value = dateLabel,
-                    icon = Icons.Default.CalendarMonth
+                    icon = Icons.Default.CalendarMonth,
+                    isError = dateError != null,
+                    errorMessage = dateError
                 ) {
                     showDatePicker = true
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 FormLabel("Giờ giao dịch")
 
                 SelectableField(
                     value = timeLabel,
-                    icon = Icons.Default.AccessTime
+                    icon = Icons.Default.AccessTime,
+                    isError = timeError != null,
+                    errorMessage = timeError
                 ) {
                     showTimePicker = true
                 }
@@ -405,14 +412,6 @@ fun AddEditTransactionScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = colors.primary
                     )
-                )
-            }
-
-            errorMessage?.let {
-                Text(
-                    text = it,
-                    color = colors.error,
-                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -475,6 +474,18 @@ fun AddEditTransactionScreen(
             }
         )
     }
+    if (showCategorySheet) {
+        CategorySelectionSheet(
+            categories = categoryOptions,
+            selectedCategory = category,
+            onCategorySelected = { selectedCategory ->
+                category = selectedCategory
+            },
+            onDismiss = {
+                showCategorySheet = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -511,10 +522,36 @@ private fun FormLabel(text: String) {
 }
 
 @Composable
+private fun FormError(message: String?) {
+    if (message != null) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, top = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ErrorOutline,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(15.dp)
+            )
+
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
 private fun TypeOption(
     text: String,
     selected: Boolean,
-    selectedColor: androidx.compose.ui.graphics.Color,
+    selectedColor: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -542,36 +579,51 @@ private fun TypeOption(
 private fun SelectableField(
     value: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isError: Boolean = false,
+    errorMessage: String? = null,
     onClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(22.dp)
-        )
-
-        Text(
-            text = value,
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 12.dp),
-            style = MaterialTheme.typography.bodyLarge
-        )
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    if (isError) {
+                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                    }
+                )
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isError) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp)
+            )
 
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+            Text(
+                text = value,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        FormError(errorMessage)
     }
 }
+
