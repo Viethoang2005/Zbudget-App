@@ -6,7 +6,9 @@ data class Transaction(
     val amount: Long,
     val type: TransactionType,
     val category: String,
-    val dateLabel: String
+    val dateLabel: String,
+    val timeLabel: String = "",
+    val note: String = ""
 )
 
 enum class TransactionType {
