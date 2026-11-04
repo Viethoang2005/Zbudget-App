@@ -7,5 +7,5 @@ object Screens {
     const val BUDGET = "budget"
     const val TRANSACTION_DETAIL = "transaction_detail"
     const val ADD_TRANSACTION = "addTransaction"
-    const val EDIT_TRANSACTION = "editTransaction/{transactionId}"
+    const val EDIT_TRANSACTION = "editTransaction"
 }
