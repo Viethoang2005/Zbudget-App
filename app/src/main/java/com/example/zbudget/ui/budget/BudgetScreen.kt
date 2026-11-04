@@ -1,6 +1,7 @@
 package com.example.zbudget.ui.budget
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,33 +68,203 @@ fun BudgetScreen(
     var showAddDialog by remember {
         mutableStateOf(false)
     }
-
+    var editingBudget by remember {
+        mutableStateOf<Budget?>(null)
+    }
+    var budgetToDelete by remember { mutableStateOf<Budget?>(null) }
     BudgetScreenContent(
         uiState = uiState,
         onPreviousMonth = viewModel::goToPreviousMonth,
         onNextMonth = viewModel::goToNextMonth,
         onAddBudgetClick = {
+            editingBudget = null
             showAddDialog = true
+        },
+        onEditBudgetClick = { budget ->
+            editingBudget = budget
+        },
+        onDeleteBudgetClick = { budget ->
+            budgetToDelete = budget
         }
     )
 
-    if (showAddDialog) {
+    if (showAddDialog || editingBudget != null) {
         AddBudgetDialog(
             onDismiss = {
                 showAddDialog = false
+                editingBudget = null
             },
+            initialBudget = editingBudget,
             onSave = { category, limitAmount ->
-                viewModel.addBudget(
-                    Budget(
-                        id = UUID.randomUUID().toString(),
-                        category = category,
-                        limitAmount = limitAmount,
-                        month = uiState.selectedMonth.toString()
+                val budget = editingBudget
+
+                if (budget != null) {
+                    viewModel.updateBudget(
+                        budget.copy(
+                            limitAmount = limitAmount
+                        )
                     )
-                )
+                    true
+                } else {
+                    viewModel.addBudget(
+                        Budget(
+                            id = UUID.randomUUID().toString(),
+                            category = category,
+                            limitAmount = limitAmount,
+                            month = uiState.selectedMonth.toString()
+                        )
+                    )
+                }
             }
         )
     }
+    budgetToDelete?.let { budget ->
+        DeleteBudgetDialog(
+            category = budget.category,
+            onDismiss = {
+                budgetToDelete = null
+            },
+            onConfirm = {
+                viewModel.deleteBudget(budget.id)
+                budgetToDelete = null
+            }
+        )
+    }
+}
+
+@Composable
+private fun DeleteBudgetDialog(
+    category: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = Color.White,
+        tonalElevation = 6.dp,
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(
+                        color = Color(0xFFFFEEEE),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = BudgetRed,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = "Xóa ngân sách?",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = ZbudgetText
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Bạn có chắc chắn muốn xóa ngân sách của danh mục này không?",
+                    fontSize = 14.sp,
+                    color = BudgetMuted,
+                    lineHeight = 21.sp
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFFF8F9F6),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                color = Color(0xFFFFEEEE),
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = categoryEmoji(category),
+                            fontSize = 20.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = category,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = ZbudgetText
+                        )
+
+                        Text(
+                            text = "Ngân sách sẽ bị xóa khỏi danh sách",
+                            fontSize = 11.sp,
+                            color = BudgetMuted
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Lưu ý: Thao tác này không thể hoàn tác.",
+                    fontSize = 12.sp,
+                    color = BudgetRed,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                shape = RoundedCornerShape(12.dp),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = BudgetRed
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp)
+                )
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Text(
+                    text = "Xóa ngân sách",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text(
+                    text = "Hủy",
+                    color = BudgetMuted,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    )
 }
 
 @Composable
@@ -98,7 +272,9 @@ private fun BudgetScreenContent(
     uiState: BudgetUiState,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
-    onAddBudgetClick: () -> Unit
+    onAddBudgetClick: () -> Unit,
+    onEditBudgetClick: (Budget) -> Unit,
+    onDeleteBudgetClick: (Budget) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -169,8 +345,15 @@ private fun BudgetScreenContent(
             }
         } else {
             items(uiState.categories.size) { index ->
+                val budget = uiState.categories[index].budget
                 BudgetCategoryCard(
-                    categoryState = uiState.categories[index]
+                    categoryState = uiState.categories[index],
+                    onClick = {
+                        onEditBudgetClick(budget)
+                    },
+                    onDeleteClick = {
+                        onDeleteBudgetClick(budget)
+                    }
                 )
             }
         }
@@ -348,7 +531,9 @@ private fun BudgetOverviewCard(
 
 @Composable
 private fun BudgetCategoryCard(
-    categoryState: BudgetCategoryUiState
+    categoryState: BudgetCategoryUiState,
+    onClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     val budget = categoryState.budget
 
@@ -359,7 +544,7 @@ private fun BudgetCategoryCard(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -400,12 +585,26 @@ private fun BudgetCategoryCard(
                     )
                 }
 
-                Text(
-                    text = "${(categoryState.progress * 100).toInt()}%",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = progressColor
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${(categoryState.progress * 100).toInt()}%",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = progressColor
+                    )
+
+                    IconButton(
+                        onClick = onDeleteClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Xóa ngân sách",
+                            tint = BudgetRed
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -593,6 +792,8 @@ private fun BudgetScreenPreview() {
         ),
         onPreviousMonth = {},
         onNextMonth = {},
-        onAddBudgetClick = {}
+        onAddBudgetClick = {},
+        onEditBudgetClick = {_ -> },
+        onDeleteBudgetClick = {_ -> }
     )
 }
