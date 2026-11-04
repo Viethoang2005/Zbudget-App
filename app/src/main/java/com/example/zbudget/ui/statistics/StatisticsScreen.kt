@@ -2,6 +2,7 @@
 package com.example.zbudget.ui.statistics
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,14 +57,16 @@ private val StatisticsMuted = Color(0xFF8A928C)
 
 @Composable
 fun StatisticsScreen(
-    viewModel: StatisticsViewModel = hiltViewModel()
+    viewModel: StatisticsViewModel = hiltViewModel(),
+    onTransactionClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     StatisticsScreenContent(
         uiState = uiState,
         onPreviousMonth = viewModel::goToPreviousMonth,
-        onNextMonth = viewModel::goToNextMonth
+        onNextMonth = viewModel::goToNextMonth,
+        onTransactionClick = onTransactionClick
     )
 }
 
@@ -71,7 +74,8 @@ fun StatisticsScreen(
 private fun StatisticsScreenContent(
     uiState: StatisticsUiState,
     onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit
+    onNextMonth: () -> Unit,
+    onTransactionClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -129,7 +133,8 @@ private fun StatisticsScreenContent(
 
         item {
             LargestExpensesCard(
-                transactions = uiState.largestExpenses
+                transactions = uiState.largestExpenses,
+                onTransactionClick = onTransactionClick
             )
         }
 
@@ -566,7 +571,8 @@ private fun CategoryStatisticRow(
 
 @Composable
 private fun LargestExpensesCard(
-    transactions: List<Transaction>
+    transactions: List<Transaction>,
+    onTransactionClick: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -589,7 +595,10 @@ private fun LargestExpensesCard(
                 EmptyStatisticsText()
             } else {
                 transactions.forEachIndexed { index, transaction ->
-                    LargestExpenseRow(transaction)
+                    LargestExpenseRow(transaction = transaction,
+                        onClick = {
+                            onTransactionClick(transaction.id)
+                        })
 
                     if (index != transactions.lastIndex) {
                         Spacer(modifier = Modifier.height(14.dp))
@@ -602,10 +611,14 @@ private fun LargestExpensesCard(
 
 @Composable
 private fun LargestExpenseRow(
-    transaction: Transaction
+    transaction: Transaction,
+    onClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -730,6 +743,7 @@ private fun StatisticsScreenPreview() {
             )
         ),
         onPreviousMonth = {},
-        onNextMonth = {}
+        onNextMonth = {},
+        onTransactionClick = {_ -> }
     )
 }

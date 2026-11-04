@@ -154,7 +154,13 @@ fun AppNavBar() {
             }
 
             composable(Screens.STAT) {
-                StatisticsScreen()
+                StatisticsScreen(
+                    onTransactionClick = { transactionId ->
+                        navController.navigate(
+                            "$TRANSACTION_DETAIL/$transactionId"
+                        )
+                    }
+                )
             }
         }
     }
