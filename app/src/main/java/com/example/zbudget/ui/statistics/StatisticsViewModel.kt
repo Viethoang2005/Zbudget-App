@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.format.ResolverStyle
 
 data class MonthlyStatistic(
     val month: YearMonth,
@@ -50,6 +51,7 @@ class StatisticsViewModel @Inject constructor(
     val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
 
     init {
+        calculateStatistics(repository.getTransactions())
         viewModelScope.launch {
             repository.transactions.collect { transactions ->
                 calculateStatistics(transactions)
@@ -57,7 +59,10 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
-    private fun parseTransactionDate(transaction: Transaction): LocalDate {
+    private val dateFormatter = DateTimeFormatter
+        .ofPattern("dd/MM/uuuu", Locale.forLanguageTag("vi-VN"))
+        .withResolverStyle(ResolverStyle.STRICT)
+    private fun parseTransactionDate(transaction: Transaction): LocalDate? {
         val today = LocalDate.now()
 
         return when (transaction.dateLabel) {
@@ -65,11 +70,8 @@ class StatisticsViewModel @Inject constructor(
             "Hôm qua" -> today.minusDays(1)
             else -> {
                 runCatching {
-                    LocalDate.parse(
-                        transaction.dateLabel,
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
-                    )
-                }.getOrDefault(today)
+                    LocalDate.parse(transaction.dateLabel, dateFormatter)
+                }.getOrNull()
             }
         }
     }
@@ -77,8 +79,15 @@ class StatisticsViewModel @Inject constructor(
     private fun calculateStatistics(transactions: List<Transaction>) {
         val selectedMonth = _uiState.value.selectedMonth
 
-        val monthlyTransactions = transactions.filter { transaction ->
-            YearMonth.from(parseTransactionDate(transaction)) == selectedMonth
+        val datedTransactions = transactions.mapNotNull { transaction ->
+            parseTransactionDate(transaction)?.let { date ->
+                transaction to date
+            }
+        }
+        val monthlyTransactions = datedTransactions.filter { (_, date) ->
+            YearMonth.from(date) == selectedMonth
+        }.map { (transaction, _) ->
+            transaction
         }
 
         val income = monthlyTransactions
@@ -110,9 +119,13 @@ class StatisticsViewModel @Inject constructor(
 
         val monthlyStatistics = (5 downTo 0).map { offset ->
             val month = selectedMonth.minusMonths(offset.toLong())
-            val monthTransactions = transactions.filter { transaction ->
-                YearMonth.from(parseTransactionDate(transaction)) == month
-            }
+            val monthTransactions = datedTransactions
+                .filter { (_, date) ->
+                    YearMonth.from(date) == month
+                }
+                .map { (transaction, _) ->
+                    transaction
+                }
 
             MonthlyStatistic(
                 month = month,

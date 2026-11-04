@@ -44,9 +44,10 @@ fun AppNavBar() {
                     currentDestination = currentDestination,
                     onNavigate = { route ->
                         navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                inclusive = true
+                            popUpTo(Screens.HOME) {
+                                inclusive = false
                             }
+                            launchSingleTop = true
                         }
                     }
                 )
