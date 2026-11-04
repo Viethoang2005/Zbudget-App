@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import com.example.zbudget.navigation.Screens.TRANSACTION_DETAIL
 import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
+import com.example.zbudget.ui.statistics.StatisticsScreen
 import com.example.zbudget.ui.transactions.AddEditTransactionScreen
 import com.example.zbudget.ui.transactions.TransactionDetailScreen
 import com.example.zbudget.ui.transactions.TransactionsScreen
@@ -43,9 +44,10 @@ fun AppNavBar() {
                     currentDestination = currentDestination,
                     onNavigate = { route ->
                         navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                inclusive = true
+                            popUpTo(Screens.HOME) {
+                                inclusive = false
                             }
+                            launchSingleTop = true
                         }
                     }
                 )
@@ -83,7 +85,7 @@ fun AppNavBar() {
                 )
             }
 
-            composable("addTransaction") {
+            composable(Screens.ADD_TRANSACTION) {
                 AddEditTransactionScreen(
                     transactionId = null,
                     onBack = {
@@ -93,7 +95,7 @@ fun AppNavBar() {
             }
 
             composable(
-                route = "editTransaction/{transactionId}",
+                route = "${Screens.EDIT_TRANSACTION}/{transactionId}",
                 arguments = listOf(
                     navArgument("transactionId") {
                         type = NavType.StringType
@@ -136,7 +138,7 @@ fun AppNavBar() {
                         },
                         onEdit = { selectedTransaction ->
                             navController.navigate(
-                                "editTransaction/${selectedTransaction.id}"
+                                "${Screens.EDIT_TRANSACTION}/${selectedTransaction.id}"
                             )
                         },
                         onDelete = { selectedTransaction ->
@@ -149,6 +151,16 @@ fun AppNavBar() {
                         text = "Không tìm thấy giao dịch."
                     )
                 }
+            }
+
+            composable(Screens.STAT) {
+                StatisticsScreen(
+                    onTransactionClick = { transactionId ->
+                        navController.navigate(
+                            "$TRANSACTION_DETAIL/$transactionId"
+                        )
+                    }
+                )
             }
         }
     }
