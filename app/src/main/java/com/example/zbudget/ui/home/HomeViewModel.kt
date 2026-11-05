@@ -39,6 +39,7 @@ class HomeViewModel @Inject constructor(
         .ofPattern("dd/MM/uuuu")
         .withResolverStyle(ResolverStyle.STRICT)
 
+    private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     init {
         observeTransactions()
     }
@@ -73,18 +74,16 @@ class HomeViewModel @Inject constructor(
     private fun getTransactionDateTime(
         transaction: Transaction
     ): LocalDateTime {
-        val date = when (transaction.dateLabel) {
-            "Hôm nay" -> LocalDate.now()
-            "Hôm qua" -> LocalDate.now().minusDays(1)
-            else -> runCatching {
+        val date = runCatching {
                 LocalDate.parse(transaction.dateLabel, dateFormatter)
-            }.getOrNull()
-        } ?: LocalDate.MIN
+            }.getOrElse{
+                LocalDate.MIN
+            }
 
         val time = runCatching {
             LocalTime.parse(
                 transaction.timeLabel,
-                DateTimeFormatter.ofPattern("H:mm")
+                timeFormatter
             )
         }.getOrElse {
             LocalTime.MIN

@@ -51,7 +51,6 @@ class StatisticsViewModel @Inject constructor(
     val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
 
     init {
-        calculateStatistics(repository.getTransactions())
         viewModelScope.launch {
             repository.transactions.collect { transactions ->
                 calculateStatistics(transactions)
@@ -63,17 +62,9 @@ class StatisticsViewModel @Inject constructor(
         .ofPattern("dd/MM/uuuu", Locale.forLanguageTag("vi-VN"))
         .withResolverStyle(ResolverStyle.STRICT)
     private fun parseTransactionDate(transaction: Transaction): LocalDate? {
-        val today = LocalDate.now()
-
-        return when (transaction.dateLabel) {
-            "Hôm nay" -> today
-            "Hôm qua" -> today.minusDays(1)
-            else -> {
-                runCatching {
-                    LocalDate.parse(transaction.dateLabel, dateFormatter)
-                }.getOrNull()
-            }
-        }
+        return runCatching {
+            LocalDate.parse(transaction.dateLabel, dateFormatter)
+        }.getOrNull()
     }
 
     private fun calculateStatistics(transactions: List<Transaction>) {

@@ -92,13 +92,9 @@ class BudgetViewModel @Inject constructor(
     }
 
     private fun parseTransactionDate(dateLabel: String): LocalDate? {
-        return when (dateLabel) {
-            "Hôm nay" -> LocalDate.now()
-            "Hôm qua" -> LocalDate.now().minusDays(1)
-            else -> runCatching {
+        return runCatching {
                 LocalDate.parse(dateLabel, dateFormatter)
             }.getOrNull()
-        }
     }
 
     fun goToPreviousMonth() {
