@@ -18,14 +18,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -42,13 +39,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
+import com.example.zbudget.ui.components.CategoryEmoji
+import com.example.zbudget.ui.components.MonthSelector
+import com.example.zbudget.ui.components.formatVnd
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetGreenLight
 import com.example.zbudget.ui.theme.ZbudgetText
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import com.example.zbudget.ui.components.formatVnd
 
 private val IncomeColor = Color(0xFF219653)
 private val ExpenseColor = Color(0xFFEB5757)
@@ -66,6 +64,7 @@ fun StatisticsScreen(
         uiState = uiState,
         onPreviousMonth = viewModel::goToPreviousMonth,
         onNextMonth = viewModel::goToNextMonth,
+        onMonthSelected = viewModel::selectMonth,
         onTransactionClick = onTransactionClick
     )
 }
@@ -75,6 +74,7 @@ private fun StatisticsScreenContent(
     uiState: StatisticsUiState,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
+    onMonthSelected: (YearMonth) -> Unit,
     onTransactionClick: (String) -> Unit
 ) {
     LazyColumn(
@@ -110,7 +110,8 @@ private fun StatisticsScreenContent(
             MonthSelector(
                 month = uiState.selectedMonth,
                 onPreviousMonth = onPreviousMonth,
-                onNextMonth = onNextMonth
+                onNextMonth = onNextMonth,
+                onMonthSelected = onMonthSelected
             )
         }
 
@@ -144,61 +145,7 @@ private fun StatisticsScreenContent(
     }
 }
 
-@Composable
-private fun MonthSelector(
-    month: YearMonth,
-    onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit
-) {
-    val formatter = DateTimeFormatter.ofPattern(
-        "'Tháng' MM, yyyy",
-        Locale.forLanguageTag("vi-VN")
-    )
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = onPreviousMonth) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBackIosNew,
-                    contentDescription = "Tháng trước",
-                    tint = ZbudgetText
-                )
-            }
-
-            Text(
-                text = month.format(formatter),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = ZbudgetText
-            )
-
-            IconButton(
-                onClick = onNextMonth,
-                enabled = month < YearMonth.now()
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                    contentDescription = "Tháng sau",
-                    tint = if (month < YearMonth.now()) {
-                        ZbudgetText
-                    } else {
-                        StatisticsMuted.copy(alpha = 0.4f)
-                    }
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun SummarySection(
@@ -629,7 +576,7 @@ private fun LargestExpenseRow(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = categoryEmoji(transaction.category),
+                text = CategoryEmoji(transaction.category),
                 fontSize = 20.sp
             )
         }
@@ -678,23 +625,6 @@ private fun EmptyStatisticsText() {
     }
 }
 
-
-private fun categoryEmoji(category: String): String {
-    return when (category) {
-        "Ăn uống" -> "🍜"
-        "Di chuyển" -> "🚗"
-        "Mua sắm" -> "🛍️"
-        "Học tập" -> "📚"
-        "Giải trí" -> "🎮"
-        "Gia đình" -> "🏠"
-        "Sức khỏe" -> "💊"
-        "Làm đẹp" -> "💄"
-        "Du lịch" -> "✈️"
-        "Hóa đơn" -> "🧾"
-        else -> "📦"
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun StatisticsScreenPreview() {
@@ -728,7 +658,7 @@ private fun StatisticsScreenPreview() {
                     amount = 500000L,
                     type = TransactionType.EXPENSE,
                     category = "Học tập",
-                    dateLabel = "Hôm nay",
+                    dateLabel = "03/11/2026",
                     timeLabel = "10:00"
                 ),
                 Transaction(
@@ -737,13 +667,14 @@ private fun StatisticsScreenPreview() {
                     amount = 250000L,
                     type = TransactionType.EXPENSE,
                     category = "Ăn uống",
-                    dateLabel = "Hôm qua",
+                    dateLabel = "02/11/2026",
                     timeLabel = "19:00"
                 )
             )
         ),
         onPreviousMonth = {},
         onNextMonth = {},
-        onTransactionClick = {_ -> }
+        onTransactionClick = {_ -> },
+        onMonthSelected = {}
     )
 }

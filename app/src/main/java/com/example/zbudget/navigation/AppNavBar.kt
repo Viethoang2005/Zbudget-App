@@ -15,6 +15,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.zbudget.navigation.Screens.TRANSACTION_DETAIL
+import com.example.zbudget.ui.budget.BudgetScreen
 import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
 import com.example.zbudget.ui.statistics.StatisticsScreen
@@ -161,6 +162,10 @@ fun AppNavBar() {
                         )
                     }
                 )
+            }
+
+            composable(Screens.BUDGET) {
+                BudgetScreen()
             }
         }
     }
