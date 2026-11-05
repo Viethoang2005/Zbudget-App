@@ -205,7 +205,7 @@ private fun BalanceCard(amount: Long, month: String = currentMonthLabel()) {
     ) {
         Column(modifier = Modifier.padding(22.dp)) {
             Text(
-                text = "Thu - chi trong danh sách mẫu",
+                text = "Thu - chi",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )

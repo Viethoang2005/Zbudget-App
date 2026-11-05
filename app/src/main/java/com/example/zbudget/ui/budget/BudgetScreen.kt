@@ -17,9 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -46,13 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.zbudget.data.model.Budget
+import com.example.zbudget.ui.components.CategoryEmoji
+import com.example.zbudget.ui.components.MonthSelector
 import com.example.zbudget.ui.components.formatVnd
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetGreenLight
 import com.example.zbudget.ui.theme.ZbudgetText
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import java.util.UUID
 
 private val BudgetBackground = Color(0xFFF8F9F6)
@@ -85,7 +83,8 @@ fun BudgetScreen(
         },
         onDeleteBudgetClick = { budget ->
             budgetToDelete = budget
-        }
+        },
+        onMonthSelected = viewModel::selectMonth
     )
 
     if (showAddDialog || editingBudget != null) {
@@ -200,7 +199,7 @@ private fun DeleteBudgetDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = categoryEmoji(category),
+                            text = CategoryEmoji(category),
                             fontSize = 20.sp
                         )
                     }
@@ -274,7 +273,8 @@ private fun BudgetScreenContent(
     onNextMonth: () -> Unit,
     onAddBudgetClick: () -> Unit,
     onEditBudgetClick: (Budget) -> Unit,
-    onDeleteBudgetClick: (Budget) -> Unit
+    onDeleteBudgetClick: (Budget) -> Unit,
+    onMonthSelected: (YearMonth) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -307,10 +307,11 @@ private fun BudgetScreenContent(
         }
 
         item {
-            BudgetMonthSelector(
+            MonthSelector(
                 month = uiState.selectedMonth,
                 onPreviousMonth = onPreviousMonth,
-                onNextMonth = onNextMonth
+                onNextMonth = onNextMonth,
+                onMonthSelected = onMonthSelected
             )
         }
         item {
@@ -360,62 +361,6 @@ private fun BudgetScreenContent(
 
         item {
             Spacer(modifier = Modifier.height(8.dp))
-        }
-    }
-}
-
-@Composable
-private fun BudgetMonthSelector(
-    month: YearMonth,
-    onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit
-) {
-    val formatter = DateTimeFormatter.ofPattern(
-        "'Tháng' MM, yyyy",
-        Locale.forLanguageTag("vi-VN")
-    )
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = onPreviousMonth) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBackIosNew,
-                    contentDescription = "Tháng trước",
-                    tint = ZbudgetText
-                )
-            }
-
-            Text(
-                text = month.format(formatter),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = ZbudgetText
-            )
-
-            IconButton(
-                onClick = onNextMonth,
-                enabled = month < YearMonth.now()
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                    contentDescription = "Tháng sau",
-                    tint = if (month < YearMonth.now()) {
-                        ZbudgetText
-                    } else {
-                        BudgetMuted.copy(alpha = 0.4f)
-                    }
-                )
-            }
         }
     }
 }
@@ -563,7 +508,7 @@ private fun BudgetCategoryCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = categoryEmoji(budget.category),
+                        text = CategoryEmoji(budget.category),
                         fontSize = 20.sp
                     )
                 }
@@ -725,22 +670,6 @@ private fun EmptyBudgetContent() {
     }
 }
 
-private fun categoryEmoji(category: String): String {
-    return when (category) {
-        "Ăn uống" -> "🍜"
-        "Di chuyển" -> "🚗"
-        "Mua sắm" -> "🛍️"
-        "Học tập" -> "📚"
-        "Giải trí" -> "🎮"
-        "Gia đình" -> "🏠"
-        "Sức khỏe" -> "💊"
-        "Làm đẹp" -> "💄"
-        "Du lịch" -> "✈️"
-        "Hóa đơn" -> "🧾"
-        else -> "📦"
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun BudgetScreenPreview() {
@@ -794,6 +723,7 @@ private fun BudgetScreenPreview() {
         onNextMonth = {},
         onAddBudgetClick = {},
         onEditBudgetClick = {_ -> },
-        onDeleteBudgetClick = {_ -> }
+        onDeleteBudgetClick = {_ -> },
+        onMonthSelected = {}
     )
 }

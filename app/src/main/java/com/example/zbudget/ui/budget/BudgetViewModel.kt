@@ -3,7 +3,6 @@ package com.example.zbudget.ui.budget
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zbudget.data.model.Budget
-import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.data.repository.BudgetRepository
 import com.example.zbudget.data.repository.TransactionRepository
@@ -98,25 +97,25 @@ class BudgetViewModel @Inject constructor(
     }
 
     fun goToPreviousMonth() {
-        val currentMonth = _uiState.value.selectedMonth
-
-        _uiState.value = _uiState.value.copy(
-            selectedMonth = currentMonth.minusMonths(1)
-        )
-
-        calculateBudget()
+        selectMonth(_uiState.value.selectedMonth.minusMonths(1))
     }
 
     fun goToNextMonth() {
-        val currentMonth = _uiState.value.selectedMonth
+        val nextMonth = _uiState.value.selectedMonth.plusMonths(1)
 
-        if (currentMonth < YearMonth.now()) {
-            _uiState.value = _uiState.value.copy(
-                selectedMonth = currentMonth.plusMonths(1)
-            )
-
-            calculateBudget()
+        if (nextMonth <= YearMonth.now()) {
+            selectMonth(nextMonth)
         }
+    }
+
+    fun selectMonth(month: YearMonth) {
+        if (month > YearMonth.now()) return
+
+        _uiState.value = _uiState.value.copy(
+            selectedMonth = month
+        )
+
+        calculateBudget()
     }
 
     fun addBudget(budget: Budget): Boolean {
