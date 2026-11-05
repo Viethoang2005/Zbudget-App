@@ -50,13 +50,7 @@ class StatisticsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StatisticsUiState())
     val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            repository.transactions.collect { transactions ->
-                calculateStatistics(transactions)
-            }
-        }
-    }
+
 
     private val dateFormatter = DateTimeFormatter
         .ofPattern("dd/MM/uuuu", Locale.forLanguageTag("vi-VN"))
@@ -66,6 +60,7 @@ class StatisticsViewModel @Inject constructor(
             LocalDate.parse(transaction.dateLabel, dateFormatter)
         }.getOrNull()
     }
+
 
     private fun calculateStatistics(transactions: List<Transaction>) {
         val selectedMonth = _uiState.value.selectedMonth
@@ -148,6 +143,14 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    init {
+        calculateStatistics(repository.getTransactions())
+        viewModelScope.launch {
+            repository.transactions.collect { transactions ->
+                calculateStatistics(transactions)
+            }
+        }
+    }
     fun selectMonth(month: YearMonth) {
         _uiState.update {
             it.copy(selectedMonth = month)

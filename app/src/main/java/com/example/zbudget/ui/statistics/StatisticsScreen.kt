@@ -728,7 +728,7 @@ private fun StatisticsScreenPreview() {
                     amount = 500000L,
                     type = TransactionType.EXPENSE,
                     category = "Học tập",
-                    dateLabel = "Hôm nay",
+                    dateLabel = "03/11/2026",
                     timeLabel = "10:00"
                 ),
                 Transaction(
@@ -737,7 +737,7 @@ private fun StatisticsScreenPreview() {
                     amount = 250000L,
                     type = TransactionType.EXPENSE,
                     category = "Ăn uống",
-                    dateLabel = "Hôm qua",
+                    dateLabel = "02/11/2026",
                     timeLabel = "19:00"
                 )
             )
