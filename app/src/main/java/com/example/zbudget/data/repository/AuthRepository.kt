@@ -3,6 +3,7 @@ package com.example.zbudget.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,6 +34,20 @@ class AuthRepository @Inject constructor(
             .signInWithEmailAndPassword(email, password)
             .await()
             .user ?: throw Exception("Đăng nhập thất bại")
+    }
+
+    suspend fun loginWithGoogle(
+        idToken: String
+    ): FirebaseUser {
+        val credential = GoogleAuthProvider.getCredential(
+            idToken,
+            null
+        )
+
+        return firebaseAuth
+            .signInWithCredential(credential)
+            .await()
+            .user ?: throw Exception("Đăng nhập Google thất bại")
     }
 
     fun logout() {

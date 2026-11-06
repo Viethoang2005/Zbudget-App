@@ -15,6 +15,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.zbudget.navigation.Screens.TRANSACTION_DETAIL
+import com.example.zbudget.ui.auth.AuthViewModel
+import com.example.zbudget.ui.auth.LoginScreen
+import com.example.zbudget.ui.auth.RegisterScreen
 import com.example.zbudget.ui.budget.BudgetScreen
 import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
@@ -27,6 +30,7 @@ import com.example.zbudget.ui.transactions.TransactionsViewModel
 @Composable
 fun AppNavBar() {
     val navController = rememberNavController()
+    val authViewModel: AuthViewModel = hiltViewModel()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
@@ -58,8 +62,38 @@ fun AppNavBar() {
         NavHost(
             modifier = Modifier.padding(innerPadding),
             navController = navController,
-            startDestination = Screens.HOME
+            startDestination = Screens.LOGIN
         ) {
+            composable(Screens.LOGIN) {
+                LoginScreen(
+                    onNavigateToRegister = {
+                        navController.navigate(Screens.REGISTER)
+                    },
+                    onLoginSuccess = {
+                        navController.navigate(Screens.HOME) {
+                            popUpTo(Screens.LOGIN) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+            composable(Screens.REGISTER) {
+                RegisterScreen(
+                    onNavigateToLogin = {
+                        navController.navigate(Screens.LOGIN)
+                    },
+                    onRegisterSuccess = {
+                        navController.navigate(Screens.LOGIN) {
+                            popUpTo(Screens.REGISTER) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
             composable(Screens.HOME) {
                 HomeScreen(
                     onNavigateToTransactions = {
@@ -69,6 +103,16 @@ fun AppNavBar() {
                         navController.navigate(
                             "$TRANSACTION_DETAIL/$transactionId"
                         )
+                    },
+                    onLogOut = {
+                        authViewModel.logout()
+
+                        navController.navigate(Screens.LOGIN) {
+                            popUpTo(Screens.HOME) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -167,6 +211,7 @@ fun AppNavBar() {
             composable(Screens.BUDGET) {
                 BudgetScreen()
             }
+
         }
     }
 }

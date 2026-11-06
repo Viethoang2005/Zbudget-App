@@ -15,8 +15,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,7 +56,8 @@ import java.util.Locale
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToTransactions: () -> Unit,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    onLogOut: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -64,7 +70,8 @@ fun HomeScreen(
                 uiState = uiState,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToTransactions = onNavigateToTransactions,
-                onItemClick = onItemClick
+                onItemClick = onItemClick,
+                onLogOut = onLogOut
             )
         }
     }
@@ -76,7 +83,8 @@ private fun DashboardContent(
     uiState: HomeUiState,
     modifier: Modifier = Modifier,
     onNavigateToTransactions: () -> Unit,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    onLogOut: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier
@@ -99,15 +107,25 @@ private fun DashboardContent(
                     color = ZbudgetText
                 )
 
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .background(ZbudgetGreenLight, CircleShape),
-                    contentAlignment = Alignment.Center
+//                Box(
+//                    modifier = Modifier
+//                        .size(46.dp)
+//                        .background(ZbudgetGreenLight, CircleShape),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Text(
+//                        text = "S", color = ZbudgetGreenDark,
+//                        fontSize = 22.sp, fontWeight = FontWeight.Bold
+//                    )
+//                }
+
+                IconButton(
+                    onClick = onLogOut,
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = ZbudgetRed)
                 ) {
-                    Text(
-                        text = "S", color = ZbudgetGreenDark,
-                        fontSize = 22.sp, fontWeight = FontWeight.Bold
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "Đăng xuất"
                     )
                 }
             }
@@ -299,6 +317,7 @@ fun HomeScreenPreview() {
     DashboardContent(
         uiState = HomeUiState(),
         onNavigateToTransactions = {},
-        onItemClick = {_ -> }
+        onItemClick = {_ -> },
+        onLogOut = {}
     )
 }
