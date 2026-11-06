@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -153,6 +154,7 @@ fun AddEditTransactionScreen(
         }
     }
 
+
     LaunchedEffect(transactionId) {
         if (transactionId != null) {
             val transaction = viewModel.getTransactionById(transactionId)
@@ -193,7 +195,7 @@ fun AddEditTransactionScreen(
         initialMinute = initialMinute.coerceIn(0, 59),
         is24Hour = true
     )
-
+    val scrollState = rememberScrollState()
     Scaffold(
         containerColor = ZbudgetCream,
         topBar = {
@@ -276,7 +278,8 @@ fun AddEditTransactionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
+                .imePadding()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
