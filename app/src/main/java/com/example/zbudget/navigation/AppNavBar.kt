@@ -187,8 +187,9 @@ fun AppNavBar() {
                             )
                         },
                         onDelete = { selectedTransaction ->
-                            viewModel.deleteTransaction(selectedTransaction.id)
-                            navController.popBackStack()
+                            viewModel.deleteTransaction(selectedTransaction.id) {
+                                navController.popBackStack()
+                            }
                         }
                     )
                 } else {

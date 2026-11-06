@@ -24,7 +24,9 @@ data class TransactionsUiState(
     val selectedSort: TransactionSort = TransactionSort.NEWEST,
     val searchQuery: String = "",
     val appliedFilter: TransactionFilter = TransactionFilter(),
-    val draftFilter: TransactionFilter = TransactionFilter()
+    val draftFilter: TransactionFilter = TransactionFilter(),
+    val isSaving: Boolean = false,
+    val saveError: String? = null
 )
 
 @HiltViewModel
@@ -199,16 +201,72 @@ class TransactionsViewModel @Inject constructor(
                 }
             }
     }
-    fun addTransaction(transaction: Transaction) {
-        repository.addTransaction(transaction)
+
+    fun saveTransaction(
+        transaction: Transaction,
+        isEditing: Boolean,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isSaving = true,
+                    saveError = null
+                )
+            }
+
+            try {
+                if (isEditing) {
+                    repository.updateTransaction(transaction)
+                } else {
+                    repository.addTransaction(transaction)
+                }
+
+                _uiState.update {
+                    it.copy(isSaving = false)
+                }
+
+                onSuccess()
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        saveError = e.localizedMessage
+                            ?: "Không thể lưu giao dịch. Vui lòng thử lại."
+                    )
+                }
+            }
+        }
     }
-    fun updateTransaction(transaction: Transaction) {
-        repository.updateTransaction(transaction)
-    }
-    fun deleteTransaction(id: String) {
-        repository.deleteTransaction(id)
-    }
-    fun generateTransactionId(): String {
-        return UUID.randomUUID().toString()
+    fun deleteTransaction(
+        id: String,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isSaving = true,
+                    saveError = null
+                )
+            }
+
+            try {
+                repository.deleteTransaction(id)
+
+                _uiState.update {
+                    it.copy(isSaving = false)
+                }
+
+                onSuccess()
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        saveError = e.localizedMessage
+                            ?: "Không thể xóa giao dịch."
+                    )
+                }
+            }
+        }
     }
 }

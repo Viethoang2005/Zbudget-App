@@ -94,7 +94,13 @@ fun AddEditTransactionScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var submitted by remember { mutableStateOf(false) }
+    var originalTransaction by remember {
+        mutableStateOf<Transaction?>(null)
+    }
 
+    var isTransactionLoaded by remember(transactionId) {
+        mutableStateOf(transactionId == null)
+    }
     val parsedAmount = amount.toLongOrNull()
 
     val validDate = runCatching {
@@ -155,10 +161,15 @@ fun AddEditTransactionScreen(
     }
 
 
-    LaunchedEffect(transactionId) {
-        if (transactionId != null) {
-            val transaction = viewModel.getTransactionById(transactionId)
+    LaunchedEffect(transactionId, uiState.transactions) {
+        if (transactionId != null && !isTransactionLoaded) {
+            val transaction = uiState.transactions.firstOrNull {
+                it.id == transactionId
+            }
+
             transaction?.let {
+                originalTransaction = it
+
                 title = it.title
                 amount = it.amount.toString()
                 category = it.category
@@ -166,6 +177,8 @@ fun AddEditTransactionScreen(
                 timeLabel = it.timeLabel
                 note = it.note
                 selectedType = it.type
+
+                isTransactionLoaded = true
             }
         }
     }
@@ -239,23 +252,24 @@ fun AddEditTransactionScreen(
 
                         if (isValid) {
                             val transaction = Transaction(
-                                id = transactionId ?: viewModel.generateTransactionId(),
+                                id = transactionId ?: "",
                                 title = title.trim(),
                                 amount = parsedAmount,
                                 type = selectedType,
                                 category = category,
                                 dateLabel = dateLabel,
                                 timeLabel = timeLabel,
-                                note = note.trim()
+                                note = note.trim(),
+                                createdAt = originalTransaction?.createdAt
+                                    ?: System.currentTimeMillis()
                             )
 
-                            if (transactionId == null) {
-                                viewModel.addTransaction(transaction)
-                            } else {
-                                viewModel.updateTransaction(transaction)
+                            viewModel.saveTransaction(
+                                transaction = transaction,
+                                isEditing = transactionId != null
+                            ) {
+                                onBack()
                             }
-
-                            onBack()
                         }
                     },
                     modifier = Modifier
