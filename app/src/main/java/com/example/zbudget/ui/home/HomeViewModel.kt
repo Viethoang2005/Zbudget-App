@@ -15,13 +15,15 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val transactions: List<Transaction> = emptyList(),
     val totalIncome: Long = 0L,
     val totalExpense: Long = 0L,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val loadError: String? = null
 ) {
     val difference: Long
         get() = totalIncome - totalExpense
@@ -40,8 +42,11 @@ class HomeViewModel @Inject constructor(
         .withResolverStyle(ResolverStyle.STRICT)
 
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
     init {
         observeTransactions()
+        observeLoading()
+        observeError()
     }
 
     private fun observeTransactions() {
@@ -56,17 +61,36 @@ class HomeViewModel @Inject constructor(
                     .sumOf { it.amount }
 
                 val recentTransactions = transactions
-                    .sortedByDescending { transaction ->
-                        getTransactionDateTime(transaction)
-                    }
+                    .sortedByDescending { getTransactionDateTime(it) }
                     .take(5)
 
-                _uiState.value = HomeUiState(
-                    transactions = recentTransactions,
-                    totalIncome = income,
-                    totalExpense = expense,
-                    isLoading = false
-                )
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        transactions = recentTransactions,
+                        totalIncome = income,
+                        totalExpense = expense
+                    )
+                }
+            }
+        }
+    }
+
+    private fun observeLoading() {
+        viewModelScope.launch {
+            repository.isLoading.collect { isLoading ->
+                _uiState.update {
+                    it.copy(isLoading = isLoading)
+                }
+            }
+        }
+    }
+
+    private fun observeError() {
+        viewModelScope.launch {
+            repository.error.collect { error ->
+                _uiState.update {
+                    it.copy(loadError = error)
+                }
             }
         }
     }
@@ -75,16 +99,13 @@ class HomeViewModel @Inject constructor(
         transaction: Transaction
     ): LocalDateTime {
         val date = runCatching {
-                LocalDate.parse(transaction.dateLabel, dateFormatter)
-            }.getOrElse{
-                LocalDate.MIN
-            }
+            LocalDate.parse(transaction.dateLabel, dateFormatter)
+        }.getOrElse {
+            LocalDate.MIN
+        }
 
         val time = runCatching {
-            LocalTime.parse(
-                transaction.timeLabel,
-                timeFormatter
-            )
+            LocalTime.parse(transaction.timeLabel, timeFormatter)
         }.getOrElse {
             LocalTime.MIN
         }

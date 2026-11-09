@@ -15,8 +15,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.zbudget.ui.components.TransactionRow
+import com.example.zbudget.ui.components.ZbudgetLoading
 import com.example.zbudget.ui.components.formatVnd
 import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
@@ -51,7 +57,8 @@ import java.util.Locale
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToTransactions: () -> Unit,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    onLogOut: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -64,7 +71,8 @@ fun HomeScreen(
                 uiState = uiState,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToTransactions = onNavigateToTransactions,
-                onItemClick = onItemClick
+                onItemClick = onItemClick,
+                onLogOut = onLogOut
             )
         }
     }
@@ -76,7 +84,8 @@ private fun DashboardContent(
     uiState: HomeUiState,
     modifier: Modifier = Modifier,
     onNavigateToTransactions: () -> Unit,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    onLogOut: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier
@@ -99,15 +108,25 @@ private fun DashboardContent(
                     color = ZbudgetText
                 )
 
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .background(ZbudgetGreenLight, CircleShape),
-                    contentAlignment = Alignment.Center
+//                Box(
+//                    modifier = Modifier
+//                        .size(46.dp)
+//                        .background(ZbudgetGreenLight, CircleShape),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Text(
+//                        text = "S", color = ZbudgetGreenDark,
+//                        fontSize = 22.sp, fontWeight = FontWeight.Bold
+//                    )
+//                }
+
+                IconButton(
+                    onClick = onLogOut,
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = ZbudgetRed)
                 ) {
-                    Text(
-                        text = "S", color = ZbudgetGreenDark,
-                        fontSize = 22.sp, fontWeight = FontWeight.Bold
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "Đăng xuất"
                     )
                 }
             }
@@ -167,10 +186,55 @@ private fun DashboardContent(
             }
         }
 
-        if (uiState.transactions.isEmpty()) {
+        if (uiState.isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        ZbudgetLoading()
+
+                        Text(
+                            text = "Đang tải giao dịch...",
+                            color = ZbudgetSecondary,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        } else if (uiState.loadError != null) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Không thể tải dữ liệu",
+                        color = ZbudgetRed,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Text(
+                        text = uiState.loadError,
+                        color = ZbudgetSecondary,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        } else if (uiState.transactions.isEmpty()) {
             item {
                 Text(
-                    text = "Chưa có giao dịch nào.",
+                    text = "Chưa có giao dịch nào. Hãy thêm giao dịch đầu tiên!",
                     color = ZbudgetSecondary,
                     modifier = Modifier.padding(vertical = 24.dp)
                 )
@@ -299,6 +363,7 @@ fun HomeScreenPreview() {
     DashboardContent(
         uiState = HomeUiState(),
         onNavigateToTransactions = {},
-        onItemClick = {_ -> }
+        onItemClick = {_ -> },
+        onLogOut = {}
     )
 }

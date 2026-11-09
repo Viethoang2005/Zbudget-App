@@ -63,11 +63,13 @@ import com.example.zbudget.data.model.TransactionCategories
 import com.example.zbudget.ui.components.CategoryOption
 import com.example.zbudget.ui.components.CategorySelectionContent
 import com.example.zbudget.ui.components.TransactionRow
+import com.example.zbudget.ui.components.ZbudgetLoading
 import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetGreenDark
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 
 @Composable
@@ -91,7 +93,8 @@ fun TransactionsScreen(
         onResetDraftFilter = viewModel::resetDraftFilter,
         onClearFilters = viewModel::clearFilters,
         onTransactionClick = onTransactionClick,
-        onAddClick = onAddClick
+        onAddClick = onAddClick,
+        onRetryLoad = viewModel::retryLoad
     )
 }
 
@@ -108,7 +111,8 @@ fun TransactionsScreenContent(
     onResetDraftFilter: () -> Unit,
     onClearFilters: () -> Unit,
     onTransactionClick: (String) -> Unit,
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    onRetryLoad: () -> Unit
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -369,58 +373,154 @@ fun TransactionsScreenContent(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            if (transactions.isEmpty()) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color.White
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Không tìm thấy giao dịch",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ZbudgetGreenDark
-                        )
 
-                        Spacer(modifier = Modifier.height(6.dp))
 
-                        Text(
-                            text = "Thử thay đổi hoặc đặt lại bộ lọc.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        TextButton(
-                            onClick = onClearFilters
+            PullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = onRetryLoad,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                when {
+                    state.isLoading && state.transactions.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("Xóa bộ lọc")
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                ZbudgetLoading()
+
+                                Text(
+                                    text = "Đang tải giao dịch...",
+                                    color = ZbudgetGreenDark,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+
+                    state.loadError != null && state.transactions.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "Không thể tải giao dịch",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+
+                                Text(
+                                    text = state.loadError,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Button(
+                                    onClick = onRetryLoad,
+                                    enabled = !state.isRefreshing,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = ZbudgetGreen
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text("Thử lại")
+                                }
+                            }
+                        }
+                    }
+
+                    transactions.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 24.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color.White
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Không tìm thấy giao dịch",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = ZbudgetGreenDark
+                                    )
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = if (state.transactions.isEmpty()) {
+                                            "Bạn chưa có giao dịch nào. Hãy thêm giao dịch đầu tiên!"
+                                        } else {
+                                            "Thử thay đổi hoặc đặt lại bộ lọc."
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+
+                                    if (state.transactions.isNotEmpty()) {
+                                        TextButton(
+                                            onClick = onClearFilters
+                                        ) {
+                                            Text("Xóa bộ lọc")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (state.loadError != null) {
+                                item {
+                                    Text(
+                                        text = state.loadError,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    )
+                                }
+                            }
+
+                            items(
+                                items = transactions,
+                                key = { it.id }
+                            ) { transaction ->
+                                TransactionRow(
+                                    transaction = transaction,
+                                    onClick = {
+                                        onTransactionClick(transaction.id)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(
-                        items = transactions,
-                        key = { it.id }
-                    ) { transaction ->
-                        TransactionRow(
-                            transaction = transaction,
-                            onClick = {
-                                onTransactionClick(transaction.id)
-                            }
-                        )
-                    }
-                }
             }
+
+
         }
     }
 
@@ -763,7 +863,8 @@ fun TransactionScreenPreview() {
             onResetDraftFilter = {},
             onClearFilters = {},
             onTransactionClick = {},
-            onAddClick = {}
+            onAddClick = {},
+            onRetryLoad = {}
         )
     }
 }

@@ -8,4 +8,6 @@ object Screens {
     const val TRANSACTION_DETAIL = "transaction_detail"
     const val ADD_TRANSACTION = "addTransaction"
     const val EDIT_TRANSACTION = "editTransaction"
+    const val LOGIN = "login"
+    const val REGISTER = "register"
 }
