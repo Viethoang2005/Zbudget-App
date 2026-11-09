@@ -70,6 +70,7 @@ import com.example.zbudget.ui.theme.ZbudgetGreenDark
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.example.zbudget.data.model.TransactionType
 
 
 @Composable
@@ -146,22 +147,44 @@ fun TransactionsScreenContent(
             add("Đến ${appliedFilter.maxAmount}đ")
         }
     }
-    val categoryOptions = remember(categories) {
-        val allCategories = (
-                TransactionCategories.expense +
-                        TransactionCategories.income
-                ).distinctBy { it.name }
+    val categoryOptions = remember(
+        state.selectedTab,
+        state.transactions
+    ) {
+        val defaultCategories = when (state.selectedTab) {
+            TransactionTab.ALL ->
+                ( TransactionCategories.expense + TransactionCategories.income ).distinctBy { it.name }
 
-        val uniqueCategories = categories.distinct()
+            TransactionTab.INCOME ->
+                TransactionCategories.income
+
+            TransactionTab.EXPENSE ->
+                TransactionCategories.expense
+        }
+
+        val existingCategories = state.transactions
+            .filter { transaction ->
+                when (state.selectedTab) {
+                    TransactionTab.ALL -> true
+                    TransactionTab.INCOME ->
+                        transaction.type == TransactionType.INCOME
+
+                    TransactionTab.EXPENSE ->
+                        transaction.type == TransactionType.EXPENSE
+                }
+            }
+            .map { it.category }
+            .distinct()
+            .filterNot { category ->
+                defaultCategories.any { it.name == category }
+            }
+            .map { category ->
+                CategoryOption(category, "📦")
+            }
 
         listOf(
             CategoryOption("Tất cả danh mục", "📋")
-        ) + uniqueCategories
-            .filterNot { it == "Tất cả danh mục" }
-            .map { categoryName ->
-                allCategories.find { it.name == categoryName }
-                    ?: CategoryOption(categoryName, "📦")
-            }
+        ) + defaultCategories + existingCategories
     }
 
     LaunchedEffect(showSearch) {

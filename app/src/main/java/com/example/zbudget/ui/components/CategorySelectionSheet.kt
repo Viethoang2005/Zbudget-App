@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.zbudget.data.model.TransactionCategories
 
 data class CategoryOption(
     val name: String,
@@ -207,14 +208,7 @@ fun CategorySelectionSheet(
 fun CategorySelectionContentPreview() {
     MaterialTheme {
         CategorySelectionContent(
-            categories = listOf(
-                CategoryOption("Ăn uống", "🍜"),
-                CategoryOption("Di chuyển", "🚗"),
-                CategoryOption("Mua sắm", "🛍️"),
-                CategoryOption("Học tập", "📚"),
-                CategoryOption("Giải trí", "🎮"),
-                CategoryOption("Gia đình", "🏠")
-            ),
+            categories = TransactionCategories.expense,
             selectedCategory = "Ăn uống",
             onCategorySelected = {}
         )
@@ -226,14 +220,7 @@ fun CategorySelectionContentPreview() {
 fun CategorySelectionSheetPreview() {
     MaterialTheme {
         CategorySelectionSheet(
-            categories = listOf(
-                CategoryOption("Ăn uống", "🍜"),
-                CategoryOption("Di chuyển", "🚗"),
-                CategoryOption("Mua sắm", "🛍️"),
-                CategoryOption("Học tập", "📚"),
-                CategoryOption("Giải trí", "🎮"),
-                CategoryOption("Gia đình", "🏠")
-            ),
+            categories = TransactionCategories.expense,
             selectedCategory = "Ăn uống",
             onCategorySelected = {},
             onDismiss = {}
