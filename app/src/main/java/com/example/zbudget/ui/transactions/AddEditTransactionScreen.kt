@@ -37,6 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -62,6 +64,7 @@ import com.example.zbudget.data.model.TransactionCategories
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.ui.components.CategoryOption
 import com.example.zbudget.ui.components.CategorySelectionSheet
+import com.example.zbudget.ui.components.ZbudgetLoading
 import com.example.zbudget.ui.theme.ZbudgetCream
 import java.time.LocalDate
 import java.time.LocalTime
@@ -78,6 +81,7 @@ fun AddEditTransactionScreen(
 ) {
     val colors = MaterialTheme.colorScheme
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -209,8 +213,16 @@ fun AddEditTransactionScreen(
         is24Hour = true
     )
     val scrollState = rememberScrollState()
+    LaunchedEffect(uiState.saveError) {
+        uiState.saveError?.let { error ->
+            snackbarHostState.showSnackbar(error)
+        }
+    }
     Scaffold(
         containerColor = ZbudgetCream,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             Row(
                 modifier = Modifier
@@ -278,12 +290,17 @@ fun AddEditTransactionScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.primary
-                    )
+                    ),
+                    enabled = !uiState.isSaving
                 ) {
-                    Text(
-                        text = if (transactionId == null) "Lưu giao dịch" else "Cập nhật giao dịch",
-                        fontWeight = FontWeight.Bold
-                    )
+                    if(uiState.isSaving) {
+                        ZbudgetLoading()
+                    }else {
+                        Text(
+                            text = if (transactionId == null) "Lưu giao dịch" else "Cập nhật giao dịch",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

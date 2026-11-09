@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
+import kotlin.coroutines.cancellation.CancellationException
 
 data class TransactionsUiState(
     val transactions: List<Transaction> = emptyList(),
@@ -26,7 +26,10 @@ data class TransactionsUiState(
     val appliedFilter: TransactionFilter = TransactionFilter(),
     val draftFilter: TransactionFilter = TransactionFilter(),
     val isSaving: Boolean = false,
-    val saveError: String? = null
+    val saveError: String? = null,
+    val isLoading: Boolean = true,
+    val loadError: String? = null,
+    val isRefreshing: Boolean = false,
 )
 
 @HiltViewModel
@@ -53,8 +56,34 @@ class TransactionsViewModel @Inject constructor(
             }
         }
 
-    }
+        viewModelScope.launch {
+            repository.isLoading.collect { isLoading ->
+                _uiState.update {
+                    it.copy(isLoading = isLoading)
+                }
+            }
+        }
+        viewModelScope.launch {
+            repository.isRefreshing.collect { isRefreshing ->
+                _uiState.update {
+                    it.copy(isRefreshing = isRefreshing)
+                }
+            }
+        }
 
+        viewModelScope.launch {
+            repository.error.collect { error ->
+                _uiState.update {
+                    it.copy(loadError = error)
+                }
+            }
+        }
+    }
+    fun retryLoad() {
+        viewModelScope.launch {
+            repository.retryLoad()
+        }
+    }
     fun getTransactionById(id: String): Transaction? {
         return repository.getTransactionById(id)
     }
@@ -227,7 +256,10 @@ class TransactionsViewModel @Inject constructor(
                 }
 
                 onSuccess()
-            } catch (e: Exception) {
+            }catch (e: CancellationException) {
+                throw e
+            }
+            catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         isSaving = false,
@@ -258,6 +290,8 @@ class TransactionsViewModel @Inject constructor(
                 }
 
                 onSuccess()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
