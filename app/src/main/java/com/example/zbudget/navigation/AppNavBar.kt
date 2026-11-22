@@ -21,6 +21,7 @@ import com.example.zbudget.ui.auth.RegisterScreen
 import com.example.zbudget.ui.budget.BudgetScreen
 import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
+import com.example.zbudget.ui.notification.NotificationsScreen
 import com.example.zbudget.ui.profile.ProfileScreen
 import com.example.zbudget.ui.statistics.StatisticsScreen
 import com.example.zbudget.ui.transactions.AddEditTransactionScreen
@@ -100,6 +101,9 @@ fun AppNavBar() {
                 HomeScreen(
                     onNavigateToTransactions = {
                         navController.navigate(Screens.TRANSACTIONS)
+                    },
+                    onNavigateToNotifications = {
+                        navController.navigate(Screens.NOTIFICATION)
                     },
                     onItemClick = { transactionId ->
                         navController.navigate(
@@ -217,6 +221,14 @@ fun AppNavBar() {
 
             composable(Screens.BUDGET) {
                 BudgetScreen()
+            }
+
+            composable(Screens.NOTIFICATION) {
+                NotificationsScreen(
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
 
         }

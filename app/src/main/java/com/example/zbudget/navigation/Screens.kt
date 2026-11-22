@@ -11,4 +11,5 @@ object Screens {
     const val EDIT_TRANSACTION = "editTransaction"
     const val LOGIN = "login"
     const val REGISTER = "register"
+    const val NOTIFICATION = "notification"
 }
