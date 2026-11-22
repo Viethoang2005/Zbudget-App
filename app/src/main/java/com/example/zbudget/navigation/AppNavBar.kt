@@ -21,6 +21,7 @@ import com.example.zbudget.ui.auth.RegisterScreen
 import com.example.zbudget.ui.budget.BudgetScreen
 import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
+import com.example.zbudget.ui.profile.ProfileScreen
 import com.example.zbudget.ui.statistics.StatisticsScreen
 import com.example.zbudget.ui.transactions.AddEditTransactionScreen
 import com.example.zbudget.ui.transactions.TransactionDetailScreen
@@ -39,7 +40,8 @@ fun AppNavBar() {
         Screens.HOME,
         Screens.TRANSACTIONS,
         Screens.STAT,
-        Screens.BUDGET
+        Screens.BUDGET,
+        Screens.PROFILE
     )
 
     Scaffold(
@@ -117,6 +119,20 @@ fun AppNavBar() {
                 )
             }
 
+            composable(Screens.PROFILE) {
+                ProfileScreen(
+                    onLogOut = {
+                        authViewModel.logout()
+
+                        navController.navigate(Screens.LOGIN) {
+                            popUpTo(Screens.HOME) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
             composable(Screens.TRANSACTIONS) {
                 TransactionsScreen(
                     onAddClick = {

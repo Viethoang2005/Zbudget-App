@@ -2,6 +2,7 @@ package com.example.zbudget.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.StackedBarChart
@@ -48,6 +49,11 @@ private val bottomNavItem = listOf(
         route = Screens.BUDGET,
         label = "Ngân sách",
         icon = Icons.Default.AccountBalanceWallet
+    ),
+    BottomNavItem(
+        route = Screens.PROFILE,
+        label = "Tài khoản",
+        icon = Icons.Default.AccountBox
     ),
 )
 
