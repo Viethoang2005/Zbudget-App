@@ -15,8 +15,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.zbudget.ui.components.TransactionRow
 import com.example.zbudget.ui.components.ZbudgetLoading
 import com.example.zbudget.ui.components.formatVnd
+import com.example.zbudget.ui.notification.NotificationViewModel
 import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetGreenDark
@@ -51,10 +58,13 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel(),
     onNavigateToTransactions: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onItemClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val unreadCount by notificationViewModel.unreadCount.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
@@ -63,8 +73,10 @@ fun HomeScreen(
         if (selectedTab == 0) {
             DashboardContent(
                 uiState = uiState,
+                unreadCount = unreadCount,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToTransactions = onNavigateToTransactions,
+                onNavigateToNotifications = onNavigateToNotifications,
                 onItemClick = onItemClick
             )
         }
@@ -75,8 +87,10 @@ fun HomeScreen(
 @Composable
 private fun DashboardContent(
     uiState: HomeUiState,
+    unreadCount: Int,
     modifier: Modifier = Modifier,
     onNavigateToTransactions: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onItemClick: (String) -> Unit
 ) {
     LazyColumn(
@@ -111,7 +125,33 @@ private fun DashboardContent(
                     )
                 }
 
-
+                BadgedBox(
+                    badge = {
+                        if (unreadCount > 0) {
+                            Badge(
+                                containerColor = ZbudgetRed,
+                                contentColor = Color.White
+                            ) {
+                                Text(
+                                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    IconButton(
+                        onClick = onNavigateToNotifications
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Thông báo",
+                            tint = ZbudgetGreenDark,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -346,6 +386,8 @@ fun HomeScreenPreview() {
     DashboardContent(
         uiState = HomeUiState(),
         onNavigateToTransactions = {},
-        onItemClick = {_ -> }
+        onItemClick = {_ -> },
+        onNavigateToNotifications = {},
+        unreadCount = 0
     )
 }
