@@ -1,6 +1,7 @@
 
 package com.example.zbudget.ui.budget
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zbudget.data.model.Budget
@@ -10,7 +11,9 @@ import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.data.repository.BudgetRepository
 import com.example.zbudget.data.repository.NotificationRepository
 import com.example.zbudget.data.repository.TransactionRepository
+import com.example.zbudget.utils.BudgetNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -24,9 +27,11 @@ import javax.inject.Inject
 class BudgetViewModel @Inject constructor(
     private val budgetRepository: BudgetRepository,
     private val transactionRepository: TransactionRepository,
-    private val notificationRepository: NotificationRepository
+    private val notificationRepository: NotificationRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    private val budgetNotificationHelper = BudgetNotificationHelper(context)
     private val _uiState = MutableStateFlow(BudgetUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -180,6 +185,14 @@ class BudgetViewModel @Inject constructor(
                         relatedId = budget.id
                     )
                 )
+            }.onSuccess { isCreated ->
+                if (isCreated) {
+                    budgetNotificationHelper.showNotification(
+                        notificationId = notificationId,
+                        title = title,
+                        message = message
+                    )
+                }
             }
         }
     }
