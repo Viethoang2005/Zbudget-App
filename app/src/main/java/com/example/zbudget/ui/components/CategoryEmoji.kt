@@ -1,17 +1,20 @@
+
 package com.example.zbudget.ui.components
 
-fun CategoryEmoji(category: String): String {
-    return when (category) {
-        "Ăn uống" -> "🍜"
-        "Di chuyển" -> "🚗"
-        "Mua sắm" -> "🛍️"
-        "Học tập" -> "📚"
-        "Giải trí" -> "🎮"
-        "Gia đình" -> "🏠"
-        "Sức khỏe" -> "💊"
-        "Làm đẹp" -> "💄"
-        "Du lịch" -> "✈️"
-        "Hóa đơn" -> "🧾"
-        else -> "📦"
+import com.example.zbudget.data.model.TransactionCategories
+import com.example.zbudget.data.model.TransactionType
+
+fun CategoryEmoji(
+    category: String,
+    type: TransactionType? = null
+): String {
+    val categories = if (type != null) {
+        TransactionCategories.getCategories(type)
+    } else {
+        TransactionCategories.expense + TransactionCategories.income
     }
+
+    return categories
+        .firstOrNull { it.name == category }
+        ?.icon ?: "📦"
 }

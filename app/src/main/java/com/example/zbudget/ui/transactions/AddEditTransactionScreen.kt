@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -61,6 +64,7 @@ import com.example.zbudget.data.model.TransactionCategories
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.ui.components.CategoryOption
 import com.example.zbudget.ui.components.CategorySelectionSheet
+import com.example.zbudget.ui.components.ZbudgetLoading
 import com.example.zbudget.ui.theme.ZbudgetCream
 import java.time.LocalDate
 import java.time.LocalTime
@@ -77,6 +81,7 @@ fun AddEditTransactionScreen(
 ) {
     val colors = MaterialTheme.colorScheme
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -93,7 +98,13 @@ fun AddEditTransactionScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var submitted by remember { mutableStateOf(false) }
+    var originalTransaction by remember {
+        mutableStateOf<Transaction?>(null)
+    }
 
+    var isTransactionLoaded by remember(transactionId) {
+        mutableStateOf(transactionId == null)
+    }
     val parsedAmount = amount.toLongOrNull()
 
     val validDate = runCatching {
@@ -153,10 +164,16 @@ fun AddEditTransactionScreen(
         }
     }
 
-    LaunchedEffect(transactionId) {
-        if (transactionId != null) {
-            val transaction = viewModel.getTransactionById(transactionId)
+
+    LaunchedEffect(transactionId, uiState.transactions) {
+        if (transactionId != null && !isTransactionLoaded) {
+            val transaction = uiState.transactions.firstOrNull {
+                it.id == transactionId
+            }
+
             transaction?.let {
+                originalTransaction = it
+
                 title = it.title
                 amount = it.amount.toString()
                 category = it.category
@@ -164,6 +181,8 @@ fun AddEditTransactionScreen(
                 timeLabel = it.timeLabel
                 note = it.note
                 selectedType = it.type
+
+                isTransactionLoaded = true
             }
         }
     }
@@ -193,9 +212,17 @@ fun AddEditTransactionScreen(
         initialMinute = initialMinute.coerceIn(0, 59),
         is24Hour = true
     )
-
+    val scrollState = rememberScrollState()
+    LaunchedEffect(uiState.saveError) {
+        uiState.saveError?.let { error ->
+            snackbarHostState.showSnackbar(error)
+        }
+    }
     Scaffold(
         containerColor = ZbudgetCream,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             Row(
                 modifier = Modifier
@@ -237,23 +264,24 @@ fun AddEditTransactionScreen(
 
                         if (isValid) {
                             val transaction = Transaction(
-                                id = transactionId ?: viewModel.generateTransactionId(),
+                                id = transactionId ?: "",
                                 title = title.trim(),
                                 amount = parsedAmount,
                                 type = selectedType,
                                 category = category,
                                 dateLabel = dateLabel,
                                 timeLabel = timeLabel,
-                                note = note.trim()
+                                note = note.trim(),
+                                createdAt = originalTransaction?.createdAt
+                                    ?: System.currentTimeMillis()
                             )
 
-                            if (transactionId == null) {
-                                viewModel.addTransaction(transaction)
-                            } else {
-                                viewModel.updateTransaction(transaction)
+                            viewModel.saveTransaction(
+                                transaction = transaction,
+                                isEditing = transactionId != null
+                            ) {
+                                onBack()
                             }
-
-                            onBack()
                         }
                     },
                     modifier = Modifier
@@ -262,12 +290,17 @@ fun AddEditTransactionScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.primary
-                    )
+                    ),
+                    enabled = !uiState.isSaving
                 ) {
-                    Text(
-                        text = if (transactionId == null) "Lưu giao dịch" else "Cập nhật giao dịch",
-                        fontWeight = FontWeight.Bold
-                    )
+                    if(uiState.isSaving) {
+                        ZbudgetLoading()
+                    }else {
+                        Text(
+                            text = if (transactionId == null) "Lưu giao dịch" else "Cập nhật giao dịch",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -276,7 +309,8 @@ fun AddEditTransactionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
+                .imePadding()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)

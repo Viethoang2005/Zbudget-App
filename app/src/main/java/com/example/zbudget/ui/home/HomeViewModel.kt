@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.data.repository.TransactionRepository
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -15,13 +16,16 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val transactions: List<Transaction> = emptyList(),
     val totalIncome: Long = 0L,
     val totalExpense: Long = 0L,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val loadError: String? = null,
+    val accountName: String? = null
 ) {
     val difference: Long
         get() = totalIncome - totalExpense
@@ -29,7 +33,8 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -40,8 +45,15 @@ class HomeViewModel @Inject constructor(
         .withResolverStyle(ResolverStyle.STRICT)
 
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
     init {
+        _uiState.update {
+            it.copy(accountName = getAccountName())
+        }
+
         observeTransactions()
+        observeLoading()
+        observeError()
     }
 
     private fun observeTransactions() {
@@ -56,17 +68,36 @@ class HomeViewModel @Inject constructor(
                     .sumOf { it.amount }
 
                 val recentTransactions = transactions
-                    .sortedByDescending { transaction ->
-                        getTransactionDateTime(transaction)
-                    }
+                    .sortedByDescending { getTransactionDateTime(it) }
                     .take(5)
 
-                _uiState.value = HomeUiState(
-                    transactions = recentTransactions,
-                    totalIncome = income,
-                    totalExpense = expense,
-                    isLoading = false
-                )
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        transactions = recentTransactions,
+                        totalIncome = income,
+                        totalExpense = expense
+                    )
+                }
+            }
+        }
+    }
+
+    private fun observeLoading() {
+        viewModelScope.launch {
+            repository.isLoading.collect { isLoading ->
+                _uiState.update {
+                    it.copy(isLoading = isLoading)
+                }
+            }
+        }
+    }
+
+    private fun observeError() {
+        viewModelScope.launch {
+            repository.error.collect { error ->
+                _uiState.update {
+                    it.copy(loadError = error)
+                }
             }
         }
     }
@@ -75,20 +106,26 @@ class HomeViewModel @Inject constructor(
         transaction: Transaction
     ): LocalDateTime {
         val date = runCatching {
-                LocalDate.parse(transaction.dateLabel, dateFormatter)
-            }.getOrElse{
-                LocalDate.MIN
-            }
+            LocalDate.parse(transaction.dateLabel, dateFormatter)
+        }.getOrElse {
+            LocalDate.MIN
+        }
 
         val time = runCatching {
-            LocalTime.parse(
-                transaction.timeLabel,
-                timeFormatter
-            )
+            LocalTime.parse(transaction.timeLabel, timeFormatter)
         }.getOrElse {
             LocalTime.MIN
         }
 
         return LocalDateTime.of(date, time)
+    }
+
+    private fun getAccountName() : String {
+        val user = firebaseAuth.currentUser
+
+        val displayName = user?.displayName?.trim()
+        if(!displayName.isNullOrBlank())  return displayName
+        val emailName = user?.email?.substringBefore("@")?.trim()
+        return emailName?.takeIf { it.isNotBlank() } ?: "Bạn"
     }
 }
