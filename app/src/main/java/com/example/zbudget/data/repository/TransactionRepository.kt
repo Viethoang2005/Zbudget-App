@@ -258,8 +258,15 @@ class TransactionRepository @Inject constructor(
     fun getTransactionById(id: String): Transaction? {
         return _transactions.value.find { it.id == id }
     }
-
+    private fun ensureInternetConnection() {
+        if (!hasInternetConnection()) {
+            throw Exception(
+                "Không có kết nối Internet. Vui lòng kiểm tra mạng và thử lại."
+            )
+        }
+    }
     suspend fun addTransaction(transaction: Transaction): String {
+        ensureInternetConnection()
         val document = getTransactionsCollection().document()
 
         val data = hashMapOf(
@@ -279,6 +286,7 @@ class TransactionRepository @Inject constructor(
     }
 
     suspend fun updateTransaction(transaction: Transaction) {
+        ensureInternetConnection()
         require(transaction.id.isNotBlank()) {
             "ID giao dịch không hợp lệ"
         }
@@ -301,6 +309,7 @@ class TransactionRepository @Inject constructor(
     }
 
     suspend fun deleteTransaction(id: String) {
+        ensureInternetConnection()
         getTransactionsCollection()
             .document(id)
             .delete()

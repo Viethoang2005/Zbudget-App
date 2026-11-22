@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.data.repository.TransactionRepository
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -23,7 +24,8 @@ data class HomeUiState(
     val totalIncome: Long = 0L,
     val totalExpense: Long = 0L,
     val isLoading: Boolean = true,
-    val loadError: String? = null
+    val loadError: String? = null,
+    val accountName: String? = null
 ) {
     val difference: Long
         get() = totalIncome - totalExpense
@@ -31,7 +33,8 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -44,6 +47,10 @@ class HomeViewModel @Inject constructor(
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     init {
+        _uiState.update {
+            it.copy(accountName = getAccountName())
+        }
+
         observeTransactions()
         observeLoading()
         observeError()
@@ -111,5 +118,14 @@ class HomeViewModel @Inject constructor(
         }
 
         return LocalDateTime.of(date, time)
+    }
+
+    private fun getAccountName() : String {
+        val user = firebaseAuth.currentUser
+
+        val displayName = user?.displayName?.trim()
+        if(!displayName.isNullOrBlank())  return displayName
+        val emailName = user?.email?.substringBefore("@")?.trim()
+        return emailName?.takeIf { it.isNotBlank() } ?: "Bạn"
     }
 }

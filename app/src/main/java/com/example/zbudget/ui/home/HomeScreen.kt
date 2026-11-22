@@ -101,28 +101,29 @@ private fun DashboardContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Dashboard",
-                    fontSize = 35.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ZbudgetText
-                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Xin chào 👋",
+                        fontSize = 16.sp,
+                        color = ZbudgetSecondary
+                    )
 
-//                Box(
-//                    modifier = Modifier
-//                        .size(46.dp)
-//                        .background(ZbudgetGreenLight, CircleShape),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    Text(
-//                        text = "S", color = ZbudgetGreenDark,
-//                        fontSize = 22.sp, fontWeight = FontWeight.Bold
-//                    )
-//                }
+                    Text(
+                        text = uiState.accountName ?: "Bạn",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ZbudgetText
+                    )
+                }
 
                 IconButton(
                     onClick = onLogOut,
-                    colors = IconButtonDefaults.iconButtonColors(contentColor = ZbudgetRed)
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = ZbudgetRed
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Logout,
