@@ -15,13 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,8 +52,7 @@ import java.util.Locale
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToTransactions: () -> Unit,
-    onItemClick: (String) -> Unit,
-    onLogOut: () -> Unit
+    onItemClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -71,8 +65,7 @@ fun HomeScreen(
                 uiState = uiState,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToTransactions = onNavigateToTransactions,
-                onItemClick = onItemClick,
-                onLogOut = onLogOut
+                onItemClick = onItemClick
             )
         }
     }
@@ -84,8 +77,7 @@ private fun DashboardContent(
     uiState: HomeUiState,
     modifier: Modifier = Modifier,
     onNavigateToTransactions: () -> Unit,
-    onItemClick: (String) -> Unit,
-    onLogOut: () -> Unit
+    onItemClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = modifier
@@ -119,17 +111,7 @@ private fun DashboardContent(
                     )
                 }
 
-                IconButton(
-                    onClick = onLogOut,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = ZbudgetRed
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = "Đăng xuất"
-                    )
-                }
+
             }
         }
 
@@ -364,7 +346,6 @@ fun HomeScreenPreview() {
     DashboardContent(
         uiState = HomeUiState(),
         onNavigateToTransactions = {},
-        onItemClick = {_ -> },
-        onLogOut = {}
+        onItemClick = {_ -> }
     )
 }
