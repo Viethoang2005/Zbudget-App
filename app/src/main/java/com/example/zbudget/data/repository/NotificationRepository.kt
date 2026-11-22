@@ -2,6 +2,7 @@
 package com.example.zbudget.data.repository
 
 import com.example.zbudget.data.model.Notification
+import com.example.zbudget.data.model.NotificationType
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -71,7 +72,9 @@ class NotificationRepository @Inject constructor(
                 com.google.firebase.firestore.Query.Direction.DESCENDING
             )
             .addSnapshotListener { snapshot, exception ->
-                if (firebaseAuth.currentUser?.uid != userId) return@addSnapshotListener
+                if (firebaseAuth.currentUser?.uid != userId) {
+                    return@addSnapshotListener
+                }
 
                 if (exception != null) {
                     _error.value = exception.message ?: "Không thể tải thông báo"
@@ -80,10 +83,20 @@ class NotificationRepository @Inject constructor(
                 }
 
                 if (snapshot != null) {
-                    _notifications.value = snapshot.documents.mapNotNull { document ->
-                        document.toObject(Notification::class.java)
-                            ?.copy(id = document.id)
+                    _notifications.value = snapshot.documents.map { document ->
+                        Notification(
+                            id = document.id,
+                            title = document.getString("title") ?: "",
+                            message = document.getString("message") ?: "",
+                            type = document.getString("type")
+                                ?: NotificationType.TRANSACTION.name,
+                            createdAt = document.getLong("createdAt")
+                                ?: System.currentTimeMillis(),
+                            isRead = document.getBoolean("isRead") ?: false,
+                            relatedId = document.getString("relatedId") ?: ""
+                        )
                     }
+
                     _error.value = null
                 }
 
@@ -112,27 +125,53 @@ class NotificationRepository @Inject constructor(
             "ID thông báo không hợp lệ"
         }
 
-        getNotificationsCollection()
-            .document(notificationId)
-            .update("isRead", true)
-            .await()
+        val previousNotifications = _notifications.value
+
+        _notifications.value = previousNotifications.map { notification ->
+            if (notification.id == notificationId) {
+                notification.copy(isRead = true)
+            } else {
+                notification
+            }
+        }
+
+        try {
+            getNotificationsCollection()
+                .document(notificationId)
+                .update("isRead", true)
+                .await()
+        } catch (e: Exception) {
+            _notifications.value = previousNotifications
+            throw e
+        }
     }
 
     suspend fun markAllAsRead() {
-        val unreadNotifications = _notifications.value.filter { !it.isRead }
-        val collection = getNotificationsCollection()
-        val batch = firestore.batch()
+        val previousNotifications = _notifications.value
+        val unreadNotifications = previousNotifications.filter { !it.isRead }
 
-        unreadNotifications.forEach { notification ->
-            batch.update(
-                collection.document(notification.id),
-                "isRead",
-                true
-            )
+        if (unreadNotifications.isEmpty()) return
+
+        _notifications.value = previousNotifications.map {
+            it.copy(isRead = true)
         }
 
-        if (unreadNotifications.isNotEmpty()) {
+        try {
+            val collection = getNotificationsCollection()
+            val batch = firestore.batch()
+
+            unreadNotifications.forEach { notification ->
+                batch.update(
+                    collection.document(notification.id),
+                    "isRead",
+                    true
+                )
+            }
+
             batch.commit().await()
+        } catch (e: Exception) {
+            _notifications.value = previousNotifications
+            throw e
         }
     }
 
@@ -158,6 +197,34 @@ class NotificationRepository @Inject constructor(
         if (_notifications.value.isNotEmpty()) {
             batch.commit().await()
         }
+    }
+
+    suspend fun addNotificationIfNotExists(
+        notificationId: String,
+        notification: Notification
+    ): Boolean {
+        val document = getNotificationsCollection().document(notificationId)
+
+        return firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(document)
+
+            if (snapshot.exists()) {
+                false
+            } else {
+                transaction.set(
+                    document,
+                    mapOf(
+                        "title" to notification.title,
+                        "message" to notification.message,
+                        "type" to notification.type,
+                        "createdAt" to notification.createdAt,
+                        "isRead" to notification.isRead,
+                        "relatedId" to notification.relatedId
+                    )
+                )
+                true
+            }
+        }.await()
     }
 
     fun clearError() {

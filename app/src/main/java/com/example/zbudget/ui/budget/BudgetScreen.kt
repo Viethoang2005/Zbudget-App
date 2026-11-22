@@ -365,6 +365,7 @@ private fun BudgetScreenContent(
     }
 }
 
+
 @Composable
 private fun BudgetOverviewCard(
     uiState: BudgetUiState
@@ -376,11 +377,32 @@ private fun BudgetOverviewCard(
         0f
     }
 
+    val isExhausted = uiState.totalBudget > 0L &&
+            uiState.totalSpent >= uiState.totalBudget
+
+    val isOverBudget = uiState.totalBudget > 0L &&
+            uiState.totalSpent > uiState.totalBudget
+
     val progressColor = when {
-        uiState.totalBudget <= 0L -> ZbudgetGreen
-        uiState.totalSpent > uiState.totalBudget -> BudgetRed
+        uiState.totalBudget <= 0L -> Color.White
+        isOverBudget -> BudgetRed
+        isExhausted -> BudgetOrange
         progress >= 0.8f -> BudgetOrange
         else -> Color.White
+    }
+
+    val statusText = when {
+        uiState.totalBudget <= 0L -> "Chưa thiết lập ngân sách"
+        isOverBudget -> "Đã vượt ngân sách"
+        isExhausted -> "Đã sử dụng hết ngân sách"
+        progress >= 0.8f -> "Sắp hết ngân sách"
+        else -> "Đang trong ngân sách"
+    }
+
+    val remainingText = when {
+        isOverBudget -> "Vượt ${formatVnd(kotlin.math.abs(uiState.remainingAmount))}"
+        isExhausted -> "Đã dùng hết"
+        else -> formatVnd(uiState.remainingAmount.coerceAtLeast(0L))
     }
 
     Card(
@@ -431,7 +453,7 @@ private fun BudgetOverviewCard(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Còn lại",
+                        text = if (isOverBudget) "Vượt mức" else "Còn lại",
                         fontSize = 12.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -439,7 +461,7 @@ private fun BudgetOverviewCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = formatVnd(uiState.remainingAmount),
+                        text = remainingText,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -461,18 +483,32 @@ private fun BudgetOverviewCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = if (uiState.totalBudget > 0L) {
-                    "${(uiState.totalSpent.toFloat() / uiState.totalBudget * 100).toInt()}% ngân sách đã sử dụng"
-                } else {
-                    "Chưa thiết lập ngân sách"
-                },
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.85f)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = statusText,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.95f)
+                )
+
+                if (uiState.totalBudget > 0L) {
+                    Text(
+                        text = "${(uiState.totalSpent.toFloat() / uiState.totalBudget * 100).toInt()}%",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
 }
+
+
 
 @Composable
 private fun BudgetCategoryCard(
@@ -481,15 +517,36 @@ private fun BudgetCategoryCard(
     onDeleteClick: () -> Unit
 ) {
     val budget = categoryState.budget
+    val isExhausted = categoryState.spentAmount >= budget.limitAmount &&
+            budget.limitAmount > 0L
+    val isOverBudget = categoryState.spentAmount > budget.limitAmount &&
+            budget.limitAmount > 0L
 
     val progressColor = when {
-        categoryState.isOverBudget -> BudgetRed
+        isOverBudget -> BudgetRed
+        isExhausted -> BudgetOrange
         categoryState.isNearLimit -> BudgetOrange
         else -> ZbudgetGreen
     }
 
+    val statusText = when {
+        isOverBudget -> "Đã vượt ngân sách"
+        isExhausted -> "Đã sử dụng hết ngân sách"
+        categoryState.isNearLimit -> "Sắp hết ngân sách"
+        else -> "Còn lại"
+    }
+
+    val statusMessage = when {
+        isOverBudget -> "Bạn đã vượt quá hạn mức của danh mục này."
+        isExhausted -> "Bạn đã sử dụng hết ngân sách của danh mục này."
+        categoryState.isNearLimit -> "Bạn đã sử dụng gần hết ngân sách."
+        else -> null
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -587,43 +644,31 @@ private fun BudgetCategoryCard(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = if (categoryState.isOverBudget) {
-                            "Vượt ngân sách"
-                        } else {
-                            "Còn lại"
-                        },
+                        text = statusText,
                         fontSize = 11.sp,
-                        color = if (categoryState.isOverBudget) {
-                            BudgetRed
-                        } else {
-                            BudgetMuted
-                        }
+                        color = progressColor
                     )
 
                     Text(
                         text = formatVnd(
-                            kotlin.math.abs(categoryState.remainingAmount)
+                            if (isOverBudget) {
+                                kotlin.math.abs(categoryState.remainingAmount)
+                            } else {
+                                categoryState.remainingAmount.coerceAtLeast(0L)
+                            }
                         ),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (categoryState.isOverBudget) {
-                            BudgetRed
-                        } else {
-                            ZbudgetText
-                        }
+                        color = progressColor
                     )
                 }
             }
 
-            if (categoryState.isNearLimit) {
+            statusMessage?.let { message ->
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = if (categoryState.isOverBudget) {
-                        "Bạn đã vượt quá hạn mức của danh mục này."
-                    } else {
-                        "Bạn đã sử dụng gần hết ngân sách."
-                    },
+                    text = message,
                     fontSize = 12.sp,
                     color = progressColor
                 )
@@ -631,6 +676,7 @@ private fun BudgetCategoryCard(
         }
     }
 }
+
 
 @Composable
 private fun EmptyBudgetContent() {

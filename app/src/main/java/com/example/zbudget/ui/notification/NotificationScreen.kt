@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -47,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.zbudget.data.model.Notification
+import com.example.zbudget.data.model.NotificationType
 import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetGreenLight
@@ -60,6 +62,7 @@ import java.util.Locale
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
+    onNavigateToBudget: () -> Unit,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val notifications by viewModel.notifications.collectAsState()
@@ -98,6 +101,18 @@ fun NotificationsScreen(
                     }
                 },
                 actions = {
+                    if (unreadCount > 0) {
+                        IconButton(
+                            onClick = viewModel::markAllAsRead
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DoneAll,
+                                contentDescription = "Đánh dấu tất cả đã đọc",
+                                tint = ZbudgetGreen
+                            )
+                        }
+                    }
+
                     if (notifications.isNotEmpty()) {
                         IconButton(
                             onClick = { showDeleteAllDialog = true }
@@ -122,19 +137,6 @@ fun NotificationsScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 20.dp)
         ) {
-            if (notifications.isNotEmpty() && unreadCount > 0) {
-                TextButton(
-                    onClick = viewModel::markAllAsRead,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(
-                        text = "Đánh dấu tất cả đã đọc",
-                        color = ZbudgetGreen,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
             when {
                 isLoading && notifications.isEmpty() -> {
                     Box(
@@ -151,7 +153,9 @@ fun NotificationsScreen(
 
                 else -> {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(
@@ -161,8 +165,10 @@ fun NotificationsScreen(
                             NotificationItem(
                                 notification = notification,
                                 onClick = {
-                                    if (!notification.isRead) {
-                                        viewModel.markAsRead(notification.id)
+                                    viewModel.markAsRead(notification.id)
+
+                                    if (notification.type == NotificationType.BUDGET_WARNING.name) {
+                                        onNavigateToBudget()
                                     }
                                 },
                                 onDelete = {
@@ -176,9 +182,11 @@ fun NotificationsScreen(
 
             actionError?.let { error ->
                 Text(
-                    text = error,
+                    text = "Lỗi: $error",
                     color = ZbudgetRed,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
                 )
             }
         }
