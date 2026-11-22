@@ -1,3 +1,4 @@
+
 package com.example.zbudget.ui.home
 
 import androidx.lifecycle.ViewModel
@@ -6,6 +7,8 @@ import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.data.repository.TransactionRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -34,11 +37,14 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: TransactionRepository,
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private var profileListener: ListenerRegistration? = null
 
     private val dateFormatter = DateTimeFormatter
         .ofPattern("dd/MM/uuuu")
@@ -47,13 +53,48 @@ class HomeViewModel @Inject constructor(
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     init {
-        _uiState.update {
-            it.copy(accountName = getAccountName())
-        }
-
+        observeAccountName()
         observeTransactions()
         observeLoading()
         observeError()
+    }
+
+    private fun observeAccountName() {
+        val user = firebaseAuth.currentUser
+
+        if (user == null) {
+            _uiState.update {
+                it.copy(accountName = "Bạn")
+            }
+            return
+        }
+
+        val fallbackName = user.email
+            ?.substringBefore("@")
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: "Bạn"
+
+        profileListener = firestore
+            .collection("users")
+            .document(user.uid)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _uiState.update {
+                        it.copy(accountName = fallbackName)
+                    }
+                    return@addSnapshotListener
+                }
+
+                val displayName = snapshot
+                    ?.getString("displayName")
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+
+                _uiState.update {
+                    it.copy(accountName = displayName ?: fallbackName)
+                }
+            }
     }
 
     private fun observeTransactions() {
@@ -120,12 +161,9 @@ class HomeViewModel @Inject constructor(
         return LocalDateTime.of(date, time)
     }
 
-    private fun getAccountName() : String {
-        val user = firebaseAuth.currentUser
-
-        val displayName = user?.displayName?.trim()
-        if(!displayName.isNullOrBlank())  return displayName
-        val emailName = user?.email?.substringBefore("@")?.trim()
-        return emailName?.takeIf { it.isNotBlank() } ?: "Bạn"
+    override fun onCleared() {
+        profileListener?.remove()
+        profileListener = null
+        super.onCleared()
     }
 }
