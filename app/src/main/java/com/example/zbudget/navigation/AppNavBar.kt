@@ -105,16 +105,6 @@ fun AppNavBar() {
                         navController.navigate(
                             "$TRANSACTION_DETAIL/$transactionId"
                         )
-                    },
-                    onLogOut = {
-                        authViewModel.logout()
-
-                        navController.navigate(Screens.LOGIN) {
-                            popUpTo(Screens.HOME) {
-                                inclusive = true
-                            }
-                            launchSingleTop = true
-                        }
                     }
                 )
             }

@@ -1,6 +1,7 @@
 
 package com.example.zbudget.data.repository
 
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -69,24 +70,53 @@ class AuthRepository @Inject constructor(
 
         val snapshot = userRef.get().await()
 
-        if (!snapshot.exists() || !snapshot.contains("displayName")) {
-            userRef.set(
-                mapOf(
-                    "displayName" to (
-                            user.displayName
-                                ?: user.email?.substringBefore("@")
-                                ?: "Người dùng"
-                            ),
-                    "email" to user.email.orEmpty()
-                ),
-                SetOptions.merge()
-            ).await()
-        } else {
-            userRef.set(
-                mapOf("email" to user.email.orEmpty()),
-                SetOptions.merge()
-            ).await()
+        val savedName = snapshot.getString("displayName")?.trim()
+
+        val displayName = savedName
+            ?.takeIf {
+                it.isNotBlank() && it != "Người dùng"
+            }
+            ?: user.displayName?.trim()?.takeIf {
+                it.isNotBlank()
+            }
+            ?: user.email?.substringBefore("@")?.trim()?.takeIf {
+                it.isNotBlank()
+            }
+            ?: "Người dùng"
+
+        userRef.set(
+            mapOf(
+                "displayName" to displayName,
+                "email" to user.email.orEmpty()
+            ),
+            SetOptions.merge()
+        ).await()
+    }
+    suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String
+    ) {
+        val user = firebaseAuth.currentUser
+            ?: throw Exception("Không tìm thấy tài khoản")
+
+        val email = user.email
+            ?: throw Exception("Tài khoản không có email")
+
+        val hasPasswordProvider = user.providerData.any {
+            it.providerId == EmailAuthProvider.PROVIDER_ID
         }
+
+        if (!hasPasswordProvider) {
+            throw Exception("Tài khoản Google không hỗ trợ đổi mật khẩu tại đây")
+        }
+
+        val credential = EmailAuthProvider.getCredential(
+            email,
+            currentPassword
+        )
+
+        user.reauthenticate(credential).await()
+        user.updatePassword(newPassword).await()
     }
 
     fun logout() {

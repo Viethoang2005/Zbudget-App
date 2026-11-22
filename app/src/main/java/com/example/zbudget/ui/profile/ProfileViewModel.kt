@@ -20,6 +20,7 @@ data class ProfileUiState(
     val displayName: String = "",
     val email: String = "",
     val isLoading: Boolean = false,
+    val isChangingPassword: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null
 )
@@ -120,6 +121,68 @@ class ProfileViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun changePassword(
+        currentPassword: String,
+        newPassword: String,
+        confirmPassword: String
+    ) {
+        if (currentPassword.isBlank()) {
+            showError("Vui lòng nhập mật khẩu hiện tại")
+            return
+        }
+
+        if (newPassword.length < 6) {
+            showError("Mật khẩu mới phải có ít nhất 6 ký tự")
+            return
+        }
+
+        if (newPassword != confirmPassword) {
+            showError("Mật khẩu xác nhận không khớp")
+            return
+        }
+
+        if (currentPassword == newPassword) {
+            showError("Mật khẩu mới phải khác mật khẩu hiện tại")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isChangingPassword = true,
+                error = null,
+                successMessage = null
+            )
+
+            try {
+                authRepository.changePassword(
+                    currentPassword = currentPassword,
+                    newPassword = newPassword
+                )
+
+                _uiState.value = _uiState.value.copy(
+                    isChangingPassword = false,
+                    successMessage = "Đổi mật khẩu thành công"
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isChangingPassword = false,
+                    error = when {
+                        e.message?.contains("password", true) == true ->
+                            "Mật khẩu hiện tại không chính xác"
+                        else -> e.message ?: "Không thể đổi mật khẩu"
+                    }
+                )
+            }
+        }
+    }
+
+    private fun showError(message: String) {
+        _uiState.value = _uiState.value.copy(
+            error = message,
+            successMessage = null
+        )
     }
 
     fun clearMessage() {
