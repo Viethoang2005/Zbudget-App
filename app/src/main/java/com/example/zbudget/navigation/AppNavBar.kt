@@ -19,8 +19,10 @@ import com.example.zbudget.ui.auth.AuthViewModel
 import com.example.zbudget.ui.auth.LoginScreen
 import com.example.zbudget.ui.auth.RegisterScreen
 import com.example.zbudget.ui.budget.BudgetScreen
+import com.example.zbudget.ui.budget.BudgetViewModel
 import com.example.zbudget.ui.components.BottomBar
 import com.example.zbudget.ui.home.HomeScreen
+import com.example.zbudget.ui.notification.NotificationsScreen
 import com.example.zbudget.ui.profile.ProfileScreen
 import com.example.zbudget.ui.statistics.StatisticsScreen
 import com.example.zbudget.ui.transactions.AddEditTransactionScreen
@@ -32,6 +34,8 @@ import com.example.zbudget.ui.transactions.TransactionsViewModel
 fun AppNavBar() {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = hiltViewModel()
+    val budgetViewModel: BudgetViewModel = hiltViewModel()
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
@@ -100,6 +104,9 @@ fun AppNavBar() {
                 HomeScreen(
                     onNavigateToTransactions = {
                         navController.navigate(Screens.TRANSACTIONS)
+                    },
+                    onNavigateToNotifications = {
+                        navController.navigate(Screens.NOTIFICATION)
                     },
                     onItemClick = { transactionId ->
                         navController.navigate(
@@ -217,6 +224,22 @@ fun AppNavBar() {
 
             composable(Screens.BUDGET) {
                 BudgetScreen()
+            }
+
+            composable(Screens.NOTIFICATION) {
+                NotificationsScreen(
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToBudget = {
+                        navController.navigate(Screens.BUDGET) {
+                            popUpTo(Screens.NOTIFICATION) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
 
         }
