@@ -1,3 +1,4 @@
+
 package com.example.zbudget.ui.home
 
 import androidx.compose.foundation.background
@@ -23,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,13 +46,8 @@ import com.example.zbudget.ui.components.TransactionRow
 import com.example.zbudget.ui.components.ZbudgetLoading
 import com.example.zbudget.ui.components.formatVnd
 import com.example.zbudget.ui.notification.NotificationViewModel
-import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetGreenDark
-import com.example.zbudget.ui.theme.ZbudgetGreenLight
-import com.example.zbudget.ui.theme.ZbudgetRed
-import com.example.zbudget.ui.theme.ZbudgetSecondary
-import com.example.zbudget.ui.theme.ZbudgetText
+import com.example.zbudget.ui.theme.ZbudgetTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -68,7 +65,7 @@ fun HomeScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
-        containerColor = ZbudgetCream,
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         if (selectedTab == 0) {
             DashboardContent(
@@ -83,7 +80,6 @@ fun HomeScreen(
     }
 }
 
-
 @Composable
 private fun DashboardContent(
     uiState: HomeUiState,
@@ -93,6 +89,8 @@ private fun DashboardContent(
     onNavigateToNotifications: () -> Unit,
     onItemClick: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -114,14 +112,14 @@ private fun DashboardContent(
                     Text(
                         text = "Xin chào 👋",
                         fontSize = 16.sp,
-                        color = ZbudgetSecondary
+                        color = colorScheme.onSurfaceVariant
                     )
 
                     Text(
                         text = uiState.accountName ?: "Bạn",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ZbudgetText
+                        color = colorScheme.onSurface
                     )
                 }
 
@@ -129,8 +127,8 @@ private fun DashboardContent(
                     badge = {
                         if (unreadCount > 0) {
                             Badge(
-                                containerColor = ZbudgetRed,
-                                contentColor = Color.White
+                                containerColor = colorScheme.error,
+                                contentColor = colorScheme.onError
                             ) {
                                 Text(
                                     text = if (unreadCount > 99) "99+" else unreadCount.toString(),
@@ -147,7 +145,7 @@ private fun DashboardContent(
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Thông báo",
-                            tint = ZbudgetGreenDark,
+                            tint = colorScheme.primary,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -170,7 +168,7 @@ private fun DashboardContent(
                     title = "Tổng thu",
                     amount = uiState.totalIncome,
                     symbol = "↙",
-                    amountColor = ZbudgetGreen,
+                    amountColor = colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -178,7 +176,7 @@ private fun DashboardContent(
                     title = "Tổng chi",
                     amount = uiState.totalExpense,
                     symbol = "↗",
-                    amountColor = ZbudgetRed,
+                    amountColor = colorScheme.error,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -194,15 +192,16 @@ private fun DashboardContent(
                     text = "Giao dịch gần đây",
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ZbudgetText
+                    color = colorScheme.onSurface
                 )
+
                 TextButton(
                     onClick = onNavigateToTransactions
                 ) {
                     Text(
                         text = "Xem tất cả ->",
                         fontSize = 13.sp,
-                        color = ZbudgetGreen,
+                        color = colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -225,7 +224,7 @@ private fun DashboardContent(
 
                         Text(
                             text = "Đang tải giao dịch...",
-                            color = ZbudgetSecondary,
+                            color = colorScheme.onSurfaceVariant,
                             fontSize = 14.sp
                         )
                     }
@@ -242,14 +241,14 @@ private fun DashboardContent(
                 ) {
                     Text(
                         text = "Không thể tải dữ liệu",
-                        color = ZbudgetRed,
+                        color = colorScheme.error,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
 
                     Text(
                         text = uiState.loadError,
-                        color = ZbudgetSecondary,
+                        color = colorScheme.onSurfaceVariant,
                         fontSize = 14.sp
                     )
                 }
@@ -258,7 +257,7 @@ private fun DashboardContent(
             item {
                 Text(
                     text = "Chưa có giao dịch nào. Hãy thêm giao dịch đầu tiên!",
-                    color = ZbudgetSecondary,
+                    color = colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
                 )
             }
@@ -282,15 +281,21 @@ private fun DashboardContent(
 }
 
 @Composable
-private fun BalanceCard(amount: Long, month: String = currentMonthLabel()) {
+private fun BalanceCard(
+    amount: Long,
+    month: String = currentMonthLabel()
+) {
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = ZbudgetGreenDark
+            containerColor = ZbudgetGreen
         )
     ) {
-        Column(modifier = Modifier.padding(22.dp)) {
+        Column(
+            modifier = Modifier.padding(22.dp)
+        ) {
             Text(
                 text = "Thu - chi",
                 color = Color.White.copy(alpha = 0.8f),
@@ -322,6 +327,7 @@ private fun currentMonthLabel(): String {
         .setLanguage("vi")
         .setRegion("VN")
         .build()
+
     return SimpleDateFormat(
         "'Tháng' M, yyyy",
         locale
@@ -336,12 +342,18 @@ private fun SummaryCard(
     amountColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -349,12 +361,15 @@ private fun SummaryCard(
                 Box(
                     modifier = Modifier
                         .size(30.dp)
-                        .background(ZbudgetGreenLight, CircleShape),
+                        .background(
+                            color = colorScheme.primaryContainer,
+                            shape = CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = symbol,
-                        color = ZbudgetGreenDark,
+                        color = colorScheme.onPrimaryContainer,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -362,7 +377,7 @@ private fun SummaryCard(
 
                 Text(
                     text = title,
-                    color = ZbudgetSecondary,
+                    color = colorScheme.onSurfaceVariant,
                     fontSize = 13.sp
                 )
             }
@@ -379,15 +394,16 @@ private fun SummaryCard(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    DashboardContent(
-        uiState = HomeUiState(),
-        onNavigateToTransactions = {},
-        onItemClick = {_ -> },
-        onNavigateToNotifications = {},
-        unreadCount = 0
-    )
+    ZbudgetTheme {
+        DashboardContent(
+            uiState = HomeUiState(),
+            onNavigateToTransactions = {},
+            onItemClick = {},
+            onNavigateToNotifications = {},
+            unreadCount = 0
+        )
+    }
 }

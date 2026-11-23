@@ -47,13 +47,9 @@ import com.example.zbudget.data.model.TransactionCategories
 import com.example.zbudget.ui.components.CategoryEmoji
 import com.example.zbudget.ui.components.CategorySelectionContent
 import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetGreenLight
-import com.example.zbudget.ui.theme.ZbudgetText
+import com.example.zbudget.ui.theme.ZbudgetTheme
 import java.text.NumberFormat
 import java.util.Locale
-
-private val DialogMuted = Color(0xFF849089)
-private val DialogBackground = Color(0xFFF7F9F6)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +58,7 @@ fun AddBudgetDialog(
     onSave: (category: String, limitAmount: Long) -> Boolean,
     initialBudget: Budget? = null
 ) {
+    val colors = MaterialTheme.colorScheme
     val isEditing = initialBudget != null
 
     var selectedCategory by remember(initialBudget) {
@@ -104,7 +101,8 @@ fun AddBudgetDialog(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color.White,
+        containerColor = colors.surface,
+        contentColor = colors.onSurface,
         shape = RoundedCornerShape(
             topStart = 28.dp,
             topEnd = 28.dp
@@ -123,7 +121,7 @@ fun AddBudgetDialog(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Quay lại",
-                        tint = ZbudgetText
+                        tint = colors.onSurface
                     )
                 }
 
@@ -159,13 +157,13 @@ fun AddBudgetDialog(
                     ) {
                         Surface(
                             modifier = Modifier.size(48.dp),
-                            color = ZbudgetGreenLight,
+                            color = ZbudgetGreen,
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AccountBalanceWallet,
                                 contentDescription = null,
-                                tint = ZbudgetGreen,
+                                tint = Color.White,
                                 modifier = Modifier.padding(11.dp)
                             )
                         }
@@ -179,7 +177,7 @@ fun AddBudgetDialog(
                                 },
                                 fontSize = 19.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = ZbudgetText
+                                color = colors.onSurface
                             )
 
                             Spacer(modifier = Modifier.height(3.dp))
@@ -191,21 +189,21 @@ fun AddBudgetDialog(
                                     "Đặt giới hạn chi tiêu hàng tháng"
                                 },
                                 fontSize = 12.sp,
-                                color = DialogMuted
+                                color = colors.onSurfaceVariant
                             )
                         }
                     }
 
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        color = DialogBackground,
+                        color = ZbudgetGreen,
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = "Hãy thiết lập mức chi tiêu phù hợp với kế hoạch tài chính của bạn.",
                             modifier = Modifier.padding(12.dp),
                             fontSize = 12.sp,
-                            color = DialogMuted,
+                            color = Color.White,
                             lineHeight = 18.sp
                         )
                     }
@@ -218,7 +216,7 @@ fun AddBudgetDialog(
                         text = "DANH MỤC",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = DialogMuted
+                        color = colors.onSurfaceVariant
                     )
 
                     Box(
@@ -237,10 +235,10 @@ fun AddBudgetDialog(
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth(),
                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                disabledBorderColor = Color(0xFFE0E5E0),
-                                disabledTextColor = ZbudgetText,
-                                disabledLabelColor = ZbudgetText,
-                                disabledContainerColor = Color.Transparent
+                                disabledBorderColor = colors.outline,
+                                disabledTextColor = colors.onSurface,
+                                disabledLabelColor = colors.onSurface,
+                                disabledContainerColor = colors.surfaceVariant
                             )
                         )
                     }
@@ -253,7 +251,7 @@ fun AddBudgetDialog(
                         text = "HẠN MỨC CHI TIÊU",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = DialogMuted
+                        color = colors.onSurfaceVariant
                     )
 
                     OutlinedTextField(
@@ -274,7 +272,7 @@ fun AddBudgetDialog(
                             Text(
                                 text = "VNĐ",
                                 fontWeight = FontWeight.SemiBold,
-                                color = DialogMuted
+                                color = colors.onSurfaceVariant
                             )
                         },
                         isError = hasInvalidAmount,
@@ -289,7 +287,7 @@ fun AddBudgetDialog(
                                 formattedAmount != null -> {
                                     Text(
                                         text = "Tương đương $formattedAmount VNĐ",
-                                        color = ZbudgetGreen
+                                        color = colors.primary
                                     )
                                 }
 
@@ -297,20 +295,30 @@ fun AddBudgetDialog(
                                     Text("Nhập số tiền bằng VND")
                                 }
                             }
-                        }
+                        },
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = colors.primary,
+                            unfocusedBorderColor = colors.outline,
+                            focusedLabelColor = colors.primary,
+                            cursorColor = colors.primary,
+                            focusedTextColor = colors.onSurface,
+                            unfocusedTextColor = colors.onSurface,
+                            focusedContainerColor = colors.surface,
+                            unfocusedContainerColor = colors.surface
+                        )
                     )
                 }
 
                 if (errorMessage != null) {
                     Surface(
-                        color = MaterialTheme.colorScheme.errorContainer,
+                        color = colors.errorContainer,
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text(
                             text = errorMessage.orEmpty(),
                             modifier = Modifier.padding(12.dp),
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.error
+                            color = colors.error
                         )
                     }
                 }
@@ -334,7 +342,8 @@ fun AddBudgetDialog(
                     enabled = isValid,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ZbudgetGreen
+                        containerColor = ZbudgetGreen,
+                        contentColor = Color.White
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -355,7 +364,7 @@ fun AddBudgetDialog(
                 ) {
                     Text(
                         text = "Hủy bỏ",
-                        color = DialogMuted,
+                        color = colors.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -367,23 +376,27 @@ fun AddBudgetDialog(
 @Preview(showBackground = true)
 @Composable
 private fun AddBudgetDialogPreview() {
-    AddBudgetDialog(
-        onDismiss = {},
-        onSave = { _, _ -> true }
-    )
+    ZbudgetTheme {
+        AddBudgetDialog(
+            onDismiss = {},
+            onSave = { _, _ -> true }
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun EditBudgetDialogPreview() {
-    AddBudgetDialog(
-        onDismiss = {},
-        onSave = { _, _ -> true },
-        initialBudget = Budget(
-            id = "1",
-            category = "Ăn uống",
-            limitAmount = 2000000L,
-            month = "2026-11"
+    ZbudgetTheme {
+        AddBudgetDialog(
+            onDismiss = {},
+            onSave = { _, _ -> true },
+            initialBudget = Budget(
+                id = "1",
+                category = "Ăn uống",
+                limitAmount = 2000000L,
+                month = "2026-11"
+            )
         )
-    )
+    }
 }

@@ -1,3 +1,4 @@
+
 package com.example.zbudget.ui.budget
 
 import androidx.compose.foundation.background
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,11 +23,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,14 +52,10 @@ import com.example.zbudget.ui.components.CategoryEmoji
 import com.example.zbudget.ui.components.MonthSelector
 import com.example.zbudget.ui.components.formatVnd
 import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetGreenLight
-import com.example.zbudget.ui.theme.ZbudgetText
+import com.example.zbudget.ui.theme.ZbudgetTheme
 import java.time.YearMonth
 import java.util.UUID
 
-private val BudgetBackground = Color(0xFFF8F9F6)
-private val BudgetMuted = Color(0xFF8A928C)
-private val BudgetRed = Color(0xFFEB5757)
 private val BudgetOrange = Color(0xFFF2994A)
 
 @Composable
@@ -69,7 +69,10 @@ fun BudgetScreen(
     var editingBudget by remember {
         mutableStateOf<Budget?>(null)
     }
-    var budgetToDelete by remember { mutableStateOf<Budget?>(null) }
+    var budgetToDelete by remember {
+        mutableStateOf<Budget?>(null)
+    }
+
     BudgetScreenContent(
         uiState = uiState,
         onPreviousMonth = viewModel::goToPreviousMonth,
@@ -117,6 +120,7 @@ fun BudgetScreen(
             }
         )
     }
+
     budgetToDelete?.let { budget ->
         DeleteBudgetDialog(
             category = budget.category,
@@ -137,17 +141,19 @@ private fun DeleteBudgetDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(24.dp),
-        containerColor = Color.White,
+        containerColor = colors.surface,
         tonalElevation = 6.dp,
         icon = {
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .background(
-                        color = Color(0xFFFFEEEE),
+                        color = colors.errorContainer,
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -155,7 +161,7 @@ private fun DeleteBudgetDialog(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = null,
-                    tint = BudgetRed,
+                    tint = colors.error,
                     modifier = Modifier.size(30.dp)
                 )
             }
@@ -165,7 +171,7 @@ private fun DeleteBudgetDialog(
                 text = "Xóa ngân sách?",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = ZbudgetText
+                color = colors.onSurface
             )
         },
         text = {
@@ -175,7 +181,7 @@ private fun DeleteBudgetDialog(
                 Text(
                     text = "Bạn có chắc chắn muốn xóa ngân sách của danh mục này không?",
                     fontSize = 14.sp,
-                    color = BudgetMuted,
+                    color = colors.onSurfaceVariant,
                     lineHeight = 21.sp
                 )
 
@@ -183,7 +189,7 @@ private fun DeleteBudgetDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            color = Color(0xFFF8F9F6),
+                            color = colors.surfaceVariant,
                             shape = RoundedCornerShape(14.dp)
                         )
                         .padding(14.dp),
@@ -193,7 +199,7 @@ private fun DeleteBudgetDialog(
                         modifier = Modifier
                             .size(40.dp)
                             .background(
-                                color = Color(0xFFFFEEEE),
+                                color = colors.errorContainer,
                                 shape = RoundedCornerShape(12.dp)
                             ),
                         contentAlignment = Alignment.Center
@@ -211,13 +217,13 @@ private fun DeleteBudgetDialog(
                             text = category,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = ZbudgetText
+                            color = colors.onSurface
                         )
 
                         Text(
                             text = "Ngân sách sẽ bị xóa khỏi danh sách",
                             fontSize = 11.sp,
-                            color = BudgetMuted
+                            color = colors.onSurfaceVariant
                         )
                     }
                 }
@@ -225,7 +231,7 @@ private fun DeleteBudgetDialog(
                 Text(
                     text = "Lưu ý: Thao tác này không thể hoàn tác.",
                     fontSize = 12.sp,
-                    color = BudgetRed,
+                    color = colors.error,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -234,8 +240,9 @@ private fun DeleteBudgetDialog(
             Button(
                 onClick = onConfirm,
                 shape = RoundedCornerShape(12.dp),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = BudgetRed
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.error,
+                    contentColor = colors.onError
                 )
             ) {
                 Icon(
@@ -258,7 +265,7 @@ private fun DeleteBudgetDialog(
             ) {
                 Text(
                     text = "Hủy",
-                    color = BudgetMuted,
+                    color = colors.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -276,24 +283,25 @@ private fun BudgetScreenContent(
     onDeleteBudgetClick: (Budget) -> Unit,
     onMonthSelected: (YearMonth) -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BudgetBackground),
+            .background(colors.background),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             horizontal = 20.dp,
             vertical = 20.dp
         ),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-
         item {
             Column {
                 Text(
                     text = "Ngân sách",
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ZbudgetText
+                    color = colors.onBackground
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
@@ -301,7 +309,7 @@ private fun BudgetScreenContent(
                 Text(
                     text = "Kiểm soát chi tiêu theo kế hoạch",
                     fontSize = 14.sp,
-                    color = BudgetMuted
+                    color = colors.onSurfaceVariant
                 )
             }
         }
@@ -314,19 +322,27 @@ private fun BudgetScreenContent(
                 onMonthSelected = onMonthSelected
             )
         }
+
         item {
             Button(
                 onClick = onAddBudgetClick,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ZbudgetGreen,
+                    contentColor = Color.White
+                )
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null
                 )
+
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Text("Thêm ngân sách")
             }
         }
+
         item {
             BudgetOverviewCard(uiState = uiState)
         }
@@ -336,7 +352,7 @@ private fun BudgetScreenContent(
                 text = "Ngân sách theo danh mục",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = ZbudgetText
+                color = colors.onSurface
             )
         }
 
@@ -345,15 +361,14 @@ private fun BudgetScreenContent(
                 EmptyBudgetContent()
             }
         } else {
-            items(uiState.categories.size) { index ->
-                val budget = uiState.categories[index].budget
+            items(uiState.categories) { categoryState ->
                 BudgetCategoryCard(
-                    categoryState = uiState.categories[index],
+                    categoryState = categoryState,
                     onClick = {
-                        onEditBudgetClick(budget)
+                        onEditBudgetClick(categoryState.budget)
                     },
                     onDeleteClick = {
-                        onDeleteBudgetClick(budget)
+                        onDeleteBudgetClick(categoryState.budget)
                     }
                 )
             }
@@ -365,11 +380,12 @@ private fun BudgetScreenContent(
     }
 }
 
-
 @Composable
 private fun BudgetOverviewCard(
     uiState: BudgetUiState
 ) {
+    val colors = MaterialTheme.colorScheme
+
     val progress = if (uiState.totalBudget > 0L) {
         (uiState.totalSpent.toFloat() / uiState.totalBudget)
             .coerceIn(0f, 1f)
@@ -384,11 +400,11 @@ private fun BudgetOverviewCard(
             uiState.totalSpent > uiState.totalBudget
 
     val progressColor = when {
-        uiState.totalBudget <= 0L -> Color.White
-        isOverBudget -> BudgetRed
+        uiState.totalBudget <= 0L -> colors.onPrimary
+        isOverBudget -> colors.error
         isExhausted -> BudgetOrange
         progress >= 0.8f -> BudgetOrange
-        else -> Color.White
+        else -> colors.onPrimary
     }
 
     val statusText = when {
@@ -408,7 +424,9 @@ private fun BudgetOverviewCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = ZbudgetGreen)
+        colors = CardDefaults.cardColors(
+            containerColor = ZbudgetGreen
+        )
     ) {
         Column(
             modifier = Modifier.padding(20.dp)
@@ -478,7 +496,7 @@ private fun BudgetOverviewCard(
                     .height(9.dp)
                     .clip(CircleShape),
                 color = progressColor,
-                trackColor = Color.White.copy(alpha = 0.25f)
+                trackColor = colors.onPrimary.copy(alpha = 0.25f)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -508,25 +526,26 @@ private fun BudgetOverviewCard(
     }
 }
 
-
-
 @Composable
 private fun BudgetCategoryCard(
     categoryState: BudgetCategoryUiState,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
     val budget = categoryState.budget
+
     val isExhausted = categoryState.spentAmount >= budget.limitAmount &&
             budget.limitAmount > 0L
+
     val isOverBudget = categoryState.spentAmount > budget.limitAmount &&
             budget.limitAmount > 0L
 
     val progressColor = when {
-        isOverBudget -> BudgetRed
-        isExhausted -> BudgetOrange
-        categoryState.isNearLimit -> BudgetOrange
-        else -> ZbudgetGreen
+        isOverBudget -> colors.error
+        isExhausted -> colors.tertiary
+        categoryState.isNearLimit -> colors.tertiary
+        else -> colors.primary
     }
 
     val statusText = when {
@@ -548,7 +567,9 @@ private fun BudgetCategoryCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -561,7 +582,7 @@ private fun BudgetCategoryCard(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(ZbudgetGreenLight),
+                        .background(colors.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -577,13 +598,13 @@ private fun BudgetCategoryCard(
                         text = budget.category,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = ZbudgetText
+                        color = colors.onSurface
                     )
 
                     Text(
                         text = "Ngân sách: ${formatVnd(budget.limitAmount)}",
                         fontSize = 12.sp,
-                        color = BudgetMuted
+                        color = colors.onSurfaceVariant
                     )
                 }
 
@@ -603,7 +624,7 @@ private fun BudgetCategoryCard(
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Xóa ngân sách",
-                            tint = BudgetRed
+                            tint = colors.error
                         )
                     }
                 }
@@ -618,7 +639,7 @@ private fun BudgetCategoryCard(
                     .height(8.dp)
                     .clip(CircleShape),
                 color = progressColor,
-                trackColor = ZbudgetGreenLight
+                trackColor = colors.surfaceVariant
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -631,14 +652,14 @@ private fun BudgetCategoryCard(
                     Text(
                         text = "Đã chi",
                         fontSize = 11.sp,
-                        color = BudgetMuted
+                        color = colors.onSurfaceVariant
                     )
 
                     Text(
                         text = formatVnd(categoryState.spentAmount),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = ZbudgetText
+                        color = colors.onSurface
                     )
                 }
 
@@ -677,13 +698,16 @@ private fun BudgetCategoryCard(
     }
 }
 
-
 @Composable
 private fun EmptyBudgetContent() {
+    val colors = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surface
+        )
     ) {
         Column(
             modifier = Modifier
@@ -702,7 +726,7 @@ private fun EmptyBudgetContent() {
                 text = "Chưa có ngân sách",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = ZbudgetText
+                color = colors.onSurface
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -710,7 +734,7 @@ private fun EmptyBudgetContent() {
             Text(
                 text = "Bạn chưa thiết lập ngân sách cho tháng này.",
                 fontSize = 13.sp,
-                color = BudgetMuted
+                color = colors.onSurfaceVariant
             )
         }
     }
@@ -719,57 +743,59 @@ private fun EmptyBudgetContent() {
 @Preview(showBackground = true)
 @Composable
 private fun BudgetScreenPreview() {
-    val currentMonth = YearMonth.now()
+    ZbudgetTheme {
+        val currentMonth = YearMonth.now()
 
-    BudgetScreenContent(
-        uiState = BudgetUiState(
-            selectedMonth = currentMonth,
-            totalBudget = 4000000L,
-            totalSpent = 2800000L,
-            categories = listOf(
-                BudgetCategoryUiState(
-                    budget = Budget(
-                        id = "1",
-                        category = "Ăn uống",
-                        limitAmount = 2000000L,
-                        month = currentMonth.toString()
+        BudgetScreenContent(
+            uiState = BudgetUiState(
+                selectedMonth = currentMonth,
+                totalBudget = 4000000L,
+                totalSpent = 2800000L,
+                categories = listOf(
+                    BudgetCategoryUiState(
+                        budget = Budget(
+                            id = "1",
+                            category = "Ăn uống",
+                            limitAmount = 2000000L,
+                            month = currentMonth.toString()
+                        ),
+                        spentAmount = 1200000L
                     ),
-                    spentAmount = 1200000L
-                ),
-                BudgetCategoryUiState(
-                    budget = Budget(
-                        id = "2",
-                        category = "Di chuyển",
-                        limitAmount = 500000L,
-                        month = currentMonth.toString()
+                    BudgetCategoryUiState(
+                        budget = Budget(
+                            id = "2",
+                            category = "Di chuyển",
+                            limitAmount = 500000L,
+                            month = currentMonth.toString()
+                        ),
+                        spentAmount = 200000L
                     ),
-                    spentAmount = 200000L
-                ),
-                BudgetCategoryUiState(
-                    budget = Budget(
-                        id = "3",
-                        category = "Học tập",
-                        limitAmount = 1000000L,
-                        month = currentMonth.toString()
+                    BudgetCategoryUiState(
+                        budget = Budget(
+                            id = "3",
+                            category = "Học tập",
+                            limitAmount = 1000000L,
+                            month = currentMonth.toString()
+                        ),
+                        spentAmount = 850000L
                     ),
-                    spentAmount = 850000L
-                ),
-                BudgetCategoryUiState(
-                    budget = Budget(
-                        id = "4",
-                        category = "Giải trí",
-                        limitAmount = 500000L,
-                        month = currentMonth.toString()
-                    ),
-                    spentAmount = 550000L
+                    BudgetCategoryUiState(
+                        budget = Budget(
+                            id = "4",
+                            category = "Giải trí",
+                            limitAmount = 500000L,
+                            month = currentMonth.toString()
+                        ),
+                        spentAmount = 550000L
+                    )
                 )
-            )
-        ),
-        onPreviousMonth = {},
-        onNextMonth = {},
-        onAddBudgetClick = {},
-        onEditBudgetClick = {_ -> },
-        onDeleteBudgetClick = {_ -> },
-        onMonthSelected = {}
-    )
+            ),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            onAddBudgetClick = {},
+            onEditBudgetClick = {},
+            onDeleteBudgetClick = {},
+            onMonthSelected = {}
+        )
+    }
 }

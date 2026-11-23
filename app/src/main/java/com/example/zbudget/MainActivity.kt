@@ -9,10 +9,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import com.example.zbudget.navigation.AppNavBar
 import com.example.zbudget.ui.theme.ZbudgetTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.content.edit
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -27,11 +33,37 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        val preferences = getSharedPreferences(
+            "zbudget_preferences",
+            MODE_PRIVATE
+        )
+
+
         setContent {
-            ZbudgetTheme {
-                AppNavBar()
+            val systemDarkTheme = isSystemInDarkTheme()
+
+            var isDarkTheme by remember {
+                mutableStateOf(
+                    preferences.getBoolean(
+                        "dark_theme",
+                        systemDarkTheme
+                    )
+                )
+            }
+
+            ZbudgetTheme(darkTheme = isDarkTheme) {
+                AppNavBar(
+                    isDarkTheme = isDarkTheme,
+                    onDarkThemeChange = { enabled ->
+                        isDarkTheme = enabled
+                        preferences.edit {
+                            putBoolean("dark_theme", enabled)
+                        }
+                    }
+                )
             }
         }
+
 
         requestNotificationPermission()
     }

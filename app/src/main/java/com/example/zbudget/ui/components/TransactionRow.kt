@@ -28,13 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
-import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetRed
 
 private data class CategoryStyle(
     val emoji: String,
-    val background: Color,
-    val foreground: Color
+    val lightBackground: Color,
+    val darkBackground: Color,
+    val lightForeground: Color,
+    val darkForeground: Color
 )
 
 @Composable
@@ -43,13 +43,25 @@ fun TransactionRow(
     onClick: () -> Unit
 ) {
     val isIncome = transaction.type == TransactionType.INCOME
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF121713)
 
     val categoryStyle = getCategoryStyle(
         category = transaction.category,
         isIncome = isIncome
     )
 
-    val amountColor = if (isIncome) ZbudgetGreen else ZbudgetRed
+    val categoryBackground = if (isDark) {
+        categoryStyle.darkBackground
+    } else {
+        categoryStyle.lightBackground
+    }
+
+    val amountColor = if (isIncome) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+
     val amountPrefix = if (isIncome) "+" else "−"
 
     Card(
@@ -71,12 +83,11 @@ fun TransactionRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
             Box(
                 modifier = Modifier
                     .size(50.dp)
                     .background(
-                        color = categoryStyle.background,
+                        color = categoryBackground,
                         shape = RoundedCornerShape(16.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -86,7 +97,6 @@ fun TransactionRow(
                     fontSize = 24.sp
                 )
             }
-
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -134,7 +144,6 @@ fun TransactionRow(
                 }
             }
 
-
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -177,47 +186,66 @@ private fun getCategoryStyle(
     return when (category) {
         "Ăn uống" -> CategoryStyle(
             emoji = "🍜",
-            background = Color(0xFFFFF0E5),
-            foreground = Color(0xFFE58A36)
+            lightBackground = Color(0xFFFFF0E5),
+            darkBackground = Color(0xFF493326),
+            lightForeground = Color(0xFFE58A36),
+            darkForeground = Color(0xFFFFB875)
         )
 
         "Di chuyển" -> CategoryStyle(
             emoji = "🛵",
-            background = Color(0xFFE8F1FF),
-            foreground = Color(0xFF3978D4)
+            lightBackground = Color(0xFFE8F1FF),
+            darkBackground = Color(0xFF263B58),
+            lightForeground = Color(0xFF3978D4),
+            darkForeground = Color(0xFF91BFFF)
         )
 
         "Học tập" -> CategoryStyle(
             emoji = "📚",
-            background = Color(0xFFF0E9FF),
-            foreground = Color(0xFF8054C7)
+            lightBackground = Color(0xFFF0E9FF),
+            darkBackground = Color(0xFF392D50),
+            lightForeground = Color(0xFF8054C7),
+            darkForeground = Color(0xFFC4A5FF)
         )
 
         "Thu nhập" -> CategoryStyle(
             emoji = "💼",
-            background = Color(0xFFE3F5E9),
-            foreground = ZbudgetGreen
+            lightBackground = Color(0xFFE3F5E9),
+            darkBackground = Color(0xFF244832),
+            lightForeground = Color(0xFF218653),
+            darkForeground = Color(0xFF8BD5A5)
         )
 
         "Gia đình" -> CategoryStyle(
             emoji = "🏠",
-            background = Color(0xFFFFE9EE),
-            foreground = Color(0xFFD85D7B)
+            lightBackground = Color(0xFFFFE9EE),
+            darkBackground = Color(0xFF4B2D37),
+            lightForeground = Color(0xFFD85D7B),
+            darkForeground = Color(0xFFFFA6BB)
         )
 
         else -> CategoryStyle(
             emoji = if (isIncome) "💰" else "💳",
-            background = if (isIncome) {
+            lightBackground = if (isIncome) {
                 Color(0xFFE3F5E9)
             } else {
                 Color(0xFFF0F1F3)
             },
-            foreground = if (isIncome) {
-                ZbudgetGreen
+            darkBackground = if (isIncome) {
+                Color(0xFF244832)
+            } else {
+                Color(0xFF30363D)
+            },
+            lightForeground = if (isIncome) {
+                Color(0xFF218653)
             } else {
                 Color(0xFF747985)
+            },
+            darkForeground = if (isIncome) {
+                Color(0xFF8BD5A5)
+            } else {
+                Color(0xFFB8C0CA)
             }
         )
     }
 }
-

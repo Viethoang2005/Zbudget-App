@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetText
+import com.example.zbudget.ui.theme.ZbudgetTheme
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -56,20 +57,16 @@ fun MonthSelector(
     onMonthSelected: (YearMonth) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     val formatter = DateTimeFormatter.ofPattern(
         "'Tháng' MM, yyyy",
         Locale.forLanguageTag("vi-VN")
     )
 
     var showBottomSheet by remember { mutableStateOf(false) }
-
-    var draftMonth by remember(month) {
-        mutableStateOf(month)
-    }
-
-    var displayedYear by remember(month) {
-        mutableIntStateOf(month.year)
-    }
+    var draftMonth by remember(month) { mutableStateOf(month) }
+    var displayedYear by remember(month) { mutableIntStateOf(month.year) }
 
     val currentMonth = YearMonth.now()
     val sheetState = rememberModalBottomSheetState()
@@ -79,7 +76,7 @@ fun MonthSelector(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colors.surface
         )
     ) {
         Row(
@@ -93,7 +90,7 @@ fun MonthSelector(
                 Icon(
                     imageVector = Icons.Default.ArrowBackIosNew,
                     contentDescription = "Tháng trước",
-                    tint = ZbudgetText
+                    tint = colors.onSurface
                 )
             }
 
@@ -112,13 +109,13 @@ fun MonthSelector(
                     text = month.format(formatter),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = ZbudgetText
+                    color = colors.onSurface
                 )
 
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "Chọn tháng",
-                    tint = ZbudgetText,
+                    tint = colors.onSurface,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -131,9 +128,9 @@ fun MonthSelector(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                     contentDescription = "Tháng sau",
                     tint = if (month < currentMonth) {
-                        ZbudgetText
+                        colors.onSurface
                     } else {
-                        ZbudgetText.copy(alpha = 0.4f)
+                        colors.onSurface.copy(alpha = 0.4f)
                     }
                 )
             }
@@ -146,7 +143,7 @@ fun MonthSelector(
                 showBottomSheet = false
             },
             sheetState = sheetState,
-            containerColor = Color.White
+            containerColor = colors.surface
         ) {
             Column(
                 modifier = Modifier
@@ -159,7 +156,7 @@ fun MonthSelector(
                     text = "Chọn tháng",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ZbudgetText
+                    color = colors.onSurface
                 )
 
                 Row(
@@ -175,7 +172,7 @@ fun MonthSelector(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = "Năm trước",
-                            tint = ZbudgetText
+                            tint = colors.onSurface
                         )
                     }
 
@@ -183,7 +180,7 @@ fun MonthSelector(
                         text = displayedYear.toString(),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ZbudgetText
+                        color = colors.onSurface
                     )
 
                     IconButton(
@@ -198,9 +195,9 @@ fun MonthSelector(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = "Năm sau",
                             tint = if (displayedYear < currentMonth.year) {
-                                ZbudgetText
+                                colors.onSurface
                             } else {
-                                ZbudgetText.copy(alpha = 0.4f)
+                                colors.onSurface.copy(alpha = 0.4f)
                             }
                         )
                     }
@@ -229,8 +226,8 @@ fun MonthSelector(
                                         .weight(1f)
                                         .background(
                                             color = when {
-                                                isSelected -> ZbudgetGreen
-                                                else -> Color(0xFFF3F5F2)
+                                                isSelected -> colors.primary
+                                                else -> colors.surfaceVariant
                                             },
                                             shape = RoundedCornerShape(12.dp)
                                         )
@@ -246,9 +243,9 @@ fun MonthSelector(
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = when {
-                                            isSelected -> Color.White
-                                            isEnabled -> ZbudgetText
-                                            else -> ZbudgetText.copy(alpha = 0.3f)
+                                            isSelected -> colors.onPrimary
+                                            isEnabled -> colors.onSurface
+                                            else -> colors.onSurface.copy(alpha = 0.3f)
                                         }
                                     )
 
@@ -257,9 +254,9 @@ fun MonthSelector(
                                             text = "Hiện tại",
                                             fontSize = 10.sp,
                                             color = if (isSelected) {
-                                                Color.White.copy(alpha = 0.85f)
+                                                colors.onPrimary.copy(alpha = 0.85f)
                                             } else {
-                                                ZbudgetGreen
+                                                colors.primary
                                             }
                                         )
                                     }
@@ -286,14 +283,14 @@ fun MonthSelector(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ZbudgetGreen
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary
                     )
                 ) {
                     Text(
                         text = "Xác nhận",
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -304,7 +301,7 @@ fun MonthSelector(
 @Preview(showBackground = true)
 @Composable
 private fun MonthSelectorPreview() {
-    MaterialTheme {
+    ZbudgetTheme {
         MonthSelector(
             month = YearMonth.of(2026, 11),
             onPreviousMonth = {},

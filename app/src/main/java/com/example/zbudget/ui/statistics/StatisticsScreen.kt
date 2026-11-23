@@ -1,4 +1,3 @@
-
 package com.example.zbudget.ui.statistics
 
 import androidx.compose.foundation.background
@@ -23,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,15 +43,9 @@ import com.example.zbudget.ui.components.CategoryEmoji
 import com.example.zbudget.ui.components.MonthSelector
 import com.example.zbudget.ui.components.formatVnd
 import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetGreenLight
-import com.example.zbudget.ui.theme.ZbudgetText
+import com.example.zbudget.ui.theme.ZbudgetTheme
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-
-private val IncomeColor = Color(0xFF219653)
-private val ExpenseColor = Color(0xFFEB5757)
-private val StatisticsBackground = Color(0xFFF8F9F6)
-private val StatisticsMuted = Color(0xFF8A928C)
 
 @Composable
 fun StatisticsScreen(
@@ -80,7 +74,7 @@ private fun StatisticsScreenContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(StatisticsBackground),
+            .background(MaterialTheme.colorScheme.background),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             horizontal = 20.dp,
             vertical = 20.dp
@@ -93,7 +87,7 @@ private fun StatisticsScreenContent(
                     text = "Thống kê",
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ZbudgetText
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
@@ -101,7 +95,7 @@ private fun StatisticsScreenContent(
                 Text(
                     text = "Theo dõi tình hình tài chính của bạn",
                     fontSize = 14.sp,
-                    color = StatisticsMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -156,13 +150,15 @@ private fun SummarySection(
             text = "Tổng quan tháng",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = ZbudgetText
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = ZbudgetGreen)
+            colors = CardDefaults.cardColors(
+                containerColor = ZbudgetGreen
+            )
         ) {
             Column(
                 modifier = Modifier.padding(20.dp)
@@ -200,12 +196,12 @@ private fun SummarySection(
                 modifier = Modifier.weight(1f),
                 title = "Tổng thu",
                 amount = uiState.totalIncome,
-                color = IncomeColor,
+                color = MaterialTheme.colorScheme.primary,
                 icon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                         contentDescription = null,
-                        tint = IncomeColor
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             )
@@ -214,12 +210,12 @@ private fun SummarySection(
                 modifier = Modifier.weight(1f),
                 title = "Tổng chi",
                 amount = uiState.totalExpense,
-                color = ExpenseColor,
+                color = MaterialTheme.colorScheme.primary,
                 icon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.TrendingDown,
                         contentDescription = null,
-                        tint = ExpenseColor
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             )
@@ -235,10 +231,14 @@ private fun SummaryItem(
     color: Color,
     icon: @Composable () -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(15.dp)
@@ -257,7 +257,7 @@ private fun SummaryItem(
 
             Text(
                 text = title,
-                color = StatisticsMuted,
+                color = colors.onSurfaceVariant,
                 fontSize = 13.sp
             )
 
@@ -280,10 +280,16 @@ private fun MonthlyChartCard(
     statistics: List<MonthlyStatistic>,
     selectedMonth: YearMonth
 ) {
+    val colors = MaterialTheme.colorScheme
+    val incomeColor = colors.primary
+    val expenseColor = colors.error
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(18.dp)
@@ -292,7 +298,7 @@ private fun MonthlyChartCard(
                 text = "Thu và chi",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = ZbudgetText
+                color = colors.onSurface
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -300,7 +306,7 @@ private fun MonthlyChartCard(
             Text(
                 text = "So sánh trong 6 tháng gần nhất",
                 fontSize = 13.sp,
-                color = StatisticsMuted
+                color = colors.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -308,8 +314,8 @@ private fun MonthlyChartCard(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                ChartLegend(color = IncomeColor, label = "Thu nhập")
-                ChartLegend(color = ExpenseColor, label = "Chi tiêu")
+                ChartLegend(color = incomeColor, label = "Thu nhập")
+                ChartLegend(color = expenseColor, label = "Chi tiêu")
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -343,7 +349,7 @@ private fun MonthlyChartCard(
                             ChartBar(
                                 amount = item.income,
                                 maxAmount = maxAmount,
-                                color = IncomeColor
+                                color = incomeColor
                             )
 
                             Spacer(modifier = Modifier.width(5.dp))
@@ -351,7 +357,7 @@ private fun MonthlyChartCard(
                             ChartBar(
                                 amount = item.expense,
                                 maxAmount = maxAmount,
-                                color = ExpenseColor
+                                color = expenseColor
                             )
                         }
 
@@ -368,9 +374,9 @@ private fun MonthlyChartCard(
                                 FontWeight.Normal
                             },
                             color = if (isSelected) {
-                                ZbudgetGreen
+                                colors.primary
                             } else {
-                                StatisticsMuted
+                                colors.onSurfaceVariant
                             }
                         )
                     }
@@ -422,7 +428,7 @@ private fun ChartLegend(
         Text(
             text = label,
             fontSize = 12.sp,
-            color = StatisticsMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -431,10 +437,14 @@ private fun ChartLegend(
 private fun CategoryStatisticsCard(
     statistics: List<CategoryStatistic>
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(18.dp)
@@ -443,7 +453,7 @@ private fun CategoryStatisticsCard(
                 text = "Chi tiêu theo danh mục",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = ZbudgetText
+                color = colors.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -467,6 +477,8 @@ private fun CategoryStatisticsCard(
 private fun CategoryStatisticRow(
     statistic: CategoryStatistic
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -477,7 +489,7 @@ private fun CategoryStatisticRow(
                 text = statistic.category,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = ZbudgetText
+                color = colors.onSurface
             )
 
             Column(horizontalAlignment = Alignment.End) {
@@ -485,13 +497,13 @@ private fun CategoryStatisticRow(
                     text = formatVnd(statistic.amount),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = ZbudgetText
+                    color = colors.onSurface
                 )
 
                 Text(
                     text = "${statistic.percentage.toInt()}%",
                     fontSize = 12.sp,
-                    color = StatisticsMuted
+                    color = colors.onSurfaceVariant
                 )
             }
         }
@@ -501,7 +513,7 @@ private fun CategoryStatisticRow(
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(CircleShape)
-                .background(ZbudgetGreenLight)
+                .background(colors.surfaceVariant)
         ) {
             Box(
                 modifier = Modifier
@@ -510,7 +522,7 @@ private fun CategoryStatisticRow(
                     )
                     .height(8.dp)
                     .clip(CircleShape)
-                    .background(ZbudgetGreen)
+                    .background(colors.primary)
             )
         }
     }
@@ -521,10 +533,14 @@ private fun LargestExpensesCard(
     transactions: List<Transaction>,
     onTransactionClick: (String) -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(18.dp)
@@ -533,7 +549,7 @@ private fun LargestExpensesCard(
                 text = "Khoản chi lớn nhất",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = ZbudgetText
+                color = colors.onSurface
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -542,10 +558,12 @@ private fun LargestExpensesCard(
                 EmptyStatisticsText()
             } else {
                 transactions.forEachIndexed { index, transaction ->
-                    LargestExpenseRow(transaction = transaction,
+                    LargestExpenseRow(
+                        transaction = transaction,
                         onClick = {
                             onTransactionClick(transaction.id)
-                        })
+                        }
+                    )
 
                     if (index != transactions.lastIndex) {
                         Spacer(modifier = Modifier.height(14.dp))
@@ -561,8 +579,11 @@ private fun LargestExpenseRow(
     transaction: Transaction,
     onClick: () -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 4.dp),
@@ -572,7 +593,7 @@ private fun LargestExpenseRow(
             modifier = Modifier
                 .size(42.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(ZbudgetGreenLight),
+                .background(colors.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -588,7 +609,7 @@ private fun LargestExpenseRow(
                 text = transaction.title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = ZbudgetText,
+                color = colors.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -596,7 +617,7 @@ private fun LargestExpenseRow(
             Text(
                 text = "${transaction.category} • ${transaction.dateLabel}",
                 fontSize = 12.sp,
-                color = StatisticsMuted
+                color = colors.onSurfaceVariant
             )
         }
 
@@ -604,7 +625,7 @@ private fun LargestExpenseRow(
             text = "-${formatVnd(transaction.amount)}",
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
-            color = ExpenseColor
+            color = colors.error
         )
     }
 }
@@ -620,7 +641,7 @@ private fun EmptyStatisticsText() {
         Text(
             text = "Chưa có khoản chi nào trong tháng này.",
             fontSize = 13.sp,
-            color = StatisticsMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -630,51 +651,53 @@ private fun EmptyStatisticsText() {
 private fun StatisticsScreenPreview() {
     val currentMonth = YearMonth.now()
 
-    StatisticsScreenContent(
-        uiState = StatisticsUiState(
-            selectedMonth = currentMonth,
-            totalIncome = 5000000L,
-            totalExpense = 1800000L,
-            balance = 3200000L,
-            transactionCount = 8,
-            monthlyStatistics = listOf(
-                MonthlyStatistic(currentMonth.minusMonths(5), 3000000L, 1500000L),
-                MonthlyStatistic(currentMonth.minusMonths(4), 4500000L, 2000000L),
-                MonthlyStatistic(currentMonth.minusMonths(3), 3500000L, 1800000L),
-                MonthlyStatistic(currentMonth.minusMonths(2), 5000000L, 2500000L),
-                MonthlyStatistic(currentMonth.minusMonths(1), 4000000L, 2200000L),
-                MonthlyStatistic(currentMonth, 5000000L, 1800000L)
-            ),
-            categoryStatistics = listOf(
-                CategoryStatistic("Ăn uống", 800000L, 44.4f),
-                CategoryStatistic("Di chuyển", 500000L, 27.8f),
-                CategoryStatistic("Học tập", 300000L, 16.7f),
-                CategoryStatistic("Giải trí", 200000L, 11.1f)
-            ),
-            largestExpenses = listOf(
-                Transaction(
-                    id = "1",
-                    title = "Mua sách lập trình",
-                    amount = 500000L,
-                    type = TransactionType.EXPENSE,
-                    category = "Học tập",
-                    dateLabel = "03/11/2026",
-                    timeLabel = "10:00"
+    ZbudgetTheme {
+        StatisticsScreenContent(
+            uiState = StatisticsUiState(
+                selectedMonth = currentMonth,
+                totalIncome = 5000000L,
+                totalExpense = 1800000L,
+                balance = 3200000L,
+                transactionCount = 8,
+                monthlyStatistics = listOf(
+                    MonthlyStatistic(currentMonth.minusMonths(5), 3000000L, 1500000L),
+                    MonthlyStatistic(currentMonth.minusMonths(4), 4500000L, 2000000L),
+                    MonthlyStatistic(currentMonth.minusMonths(3), 3500000L, 1800000L),
+                    MonthlyStatistic(currentMonth.minusMonths(2), 5000000L, 2500000L),
+                    MonthlyStatistic(currentMonth.minusMonths(1), 4000000L, 2200000L),
+                    MonthlyStatistic(currentMonth, 5000000L, 1800000L)
                 ),
-                Transaction(
-                    id = "2",
-                    title = "Ăn tối",
-                    amount = 250000L,
-                    type = TransactionType.EXPENSE,
-                    category = "Ăn uống",
-                    dateLabel = "02/11/2026",
-                    timeLabel = "19:00"
+                categoryStatistics = listOf(
+                    CategoryStatistic("Ăn uống", 800000L, 44.4f),
+                    CategoryStatistic("Di chuyển", 500000L, 27.8f),
+                    CategoryStatistic("Học tập", 300000L, 16.7f),
+                    CategoryStatistic("Giải trí", 200000L, 11.1f)
+                ),
+                largestExpenses = listOf(
+                    Transaction(
+                        id = "1",
+                        title = "Mua sách lập trình",
+                        amount = 500000L,
+                        type = TransactionType.EXPENSE,
+                        category = "Học tập",
+                        dateLabel = "03/11/2026",
+                        timeLabel = "10:00"
+                    ),
+                    Transaction(
+                        id = "2",
+                        title = "Ăn tối",
+                        amount = 250000L,
+                        type = TransactionType.EXPENSE,
+                        category = "Ăn uống",
+                        dateLabel = "02/11/2026",
+                        timeLabel = "19:00"
+                    )
                 )
-            )
-        ),
-        onPreviousMonth = {},
-        onNextMonth = {},
-        onTransactionClick = {_ -> },
-        onMonthSelected = {}
-    )
+            ),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            onTransactionClick = {},
+            onMonthSelected = {}
+        )
+    }
 }

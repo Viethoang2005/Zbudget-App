@@ -56,10 +56,9 @@ import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.ui.components.TransactionInfoRow
 import com.example.zbudget.ui.components.formatVnd
-import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
 import com.example.zbudget.ui.theme.ZbudgetGreenDark
-import com.example.zbudget.ui.theme.ZbudgetRed
+import com.example.zbudget.ui.theme.ZbudgetTheme
 
 @Composable
 fun TransactionDetailScreen(
@@ -68,12 +67,14 @@ fun TransactionDetailScreen(
     onEdit: (Transaction) -> Unit = {},
     onDelete: (Transaction) -> Unit = {}
 ) {
+    val colors = MaterialTheme.colorScheme
     val isIncome = transaction.type == TransactionType.INCOME
-    val amountColor = if (isIncome) ZbudgetGreen else ZbudgetRed
+    val amountColor = if (isIncome) colors.primary else colors.error
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+
     Scaffold(
-        containerColor = ZbudgetCream,
+        containerColor = colors.background,
         topBar = {
             Row(
                 modifier = Modifier
@@ -85,7 +86,7 @@ fun TransactionDetailScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Quay lại",
-                        tint = ZbudgetGreenDark
+                        tint = colors.onSurface
                     )
                 }
 
@@ -94,7 +95,7 @@ fun TransactionDetailScreen(
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = ZbudgetGreenDark
+                    color = colors.onBackground
                 )
             }
         }
@@ -113,7 +114,7 @@ fun TransactionDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = ZbudgetGreenDark
+                    containerColor = ZbudgetGreen
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 2.dp
@@ -130,7 +131,7 @@ fun TransactionDetailScreen(
                         modifier = Modifier
                             .size(68.dp)
                             .background(
-                                color = Color.White.copy(alpha = 0.15f),
+                                Color.White.copy(alpha = 0.12f),
                                 shape = CircleShape
                             ),
                         contentAlignment = Alignment.Center
@@ -149,7 +150,7 @@ fun TransactionDetailScreen(
 
                     Text(
                         text = if (isIncome) "KHOẢN THU" else "KHOẢN CHI",
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = Color.White,
                         style = MaterialTheme.typography.labelLarge,
                         letterSpacing = 1.5.sp
                     )
@@ -173,7 +174,7 @@ fun TransactionDetailScreen(
                     Box(
                         modifier = Modifier
                             .background(
-                                color = Color.White.copy(alpha = 0.14f),
+                                Color.White.copy(alpha = 0.12f),
                                 shape = RoundedCornerShape(50)
                             )
                             .padding(horizontal = 14.dp, vertical = 7.dp)
@@ -193,7 +194,7 @@ fun TransactionDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colors.surface
                 )
             ) {
                 Column(
@@ -204,7 +205,7 @@ fun TransactionDetailScreen(
                         text = "Thông tin giao dịch",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = ZbudgetGreenDark
+                        color = colors.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -254,7 +255,7 @@ fun TransactionDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = colors.surface
                     )
                 ) {
                     Column(
@@ -270,14 +271,14 @@ fun TransactionDetailScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                                 contentDescription = null,
-                                tint = ZbudgetGreenDark
+                                tint = colors.primary
                             )
 
                             Text(
                                 text = "Ghi chú",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = ZbudgetGreenDark
+                                color = colors.primary
                             )
                         }
 
@@ -302,7 +303,8 @@ fun TransactionDetailScreen(
                         .height(54.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ZbudgetGreen
+                        containerColor = ZbudgetGreen,
+                        contentColor = Color.White
                     )
                 ) {
                     Icon(
@@ -321,17 +323,20 @@ fun TransactionDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colors.error
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
                         contentDescription = null,
-                        tint = ZbudgetRed
+                        tint = colors.error
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = "Xóa giao dịch",
-                        color = ZbudgetRed,
+                        color = colors.error,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -359,7 +364,7 @@ fun TransactionDetailScreen(
                         onDelete(transaction)
                     }
                 ) {
-                    Text("Xóa", color = ZbudgetRed)
+                    Text("Xóa", color = colors.error)
                 }
             },
             dismissButton = {
@@ -378,7 +383,7 @@ fun TransactionDetailScreen(
 @Preview(showBackground = true)
 @Composable
 private fun TransactionDetailScreenPreview() {
-    MaterialTheme {
+    ZbudgetTheme {
         TransactionDetailScreen(
             transaction = Transaction(
                 id = "TXN001",
@@ -388,7 +393,7 @@ private fun TransactionDetailScreenPreview() {
                 category = "Ăn uống",
                 dateLabel = "23/10/2026",
                 timeLabel = "8:00",
-                note = "Ghi chu"
+                note = "Ghi chú"
             ),
             onBack = {}
         )

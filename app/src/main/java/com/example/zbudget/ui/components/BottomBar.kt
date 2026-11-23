@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.StackedBarChart
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
@@ -19,52 +20,26 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.example.zbudget.navigation.Screens
-import com.example.zbudget.ui.theme.ZbudgetCream
-import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetGreenLight
-import com.example.zbudget.ui.theme.ZbudgetSecondary
-import com.example.zbudget.ui.theme.ZbudgetText
+import com.example.zbudget.ui.theme.ZbudgetTheme
 
 data class BottomNavItem(
     val route: String,
     val label: String,
-    val icon: ImageVector
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
 private val bottomNavItems = listOf(
-    BottomNavItem(
-        route = Screens.HOME,
-        label = "Trang Chủ",
-        icon = Icons.Default.Home
-    ),
-    BottomNavItem(
-        route = Screens.TRANSACTIONS,
-        label = "Giao dịch",
-        icon = Icons.Default.Receipt
-    ),
-    BottomNavItem(
-        route = Screens.STAT,
-        label = "Thống Kê",
-        icon = Icons.Default.StackedBarChart
-    ),
-    BottomNavItem(
-        route = Screens.BUDGET,
-        label = "Ngân sách",
-        icon = Icons.Default.AccountBalanceWallet
-    ),
-    BottomNavItem(
-        route = Screens.PROFILE,
-        label = "Tài khoản",
-        icon = Icons.Default.AccountBox
-    )
+    BottomNavItem(Screens.HOME, "Trang Chủ", Icons.Default.Home),
+    BottomNavItem(Screens.TRANSACTIONS, "Giao dịch", Icons.Default.Receipt),
+    BottomNavItem(Screens.STAT, "Thống Kê", Icons.Default.StackedBarChart),
+    BottomNavItem(Screens.BUDGET, "Ngân sách", Icons.Default.AccountBalanceWallet),
+    BottomNavItem(Screens.PROFILE, "Tài khoản", Icons.Default.AccountBox)
 )
 
 @Composable
@@ -72,18 +47,18 @@ fun BottomBar(
     currentDestination: NavDestination?,
     onNavigate: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     NavigationBar(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = ZbudgetCream,
-        contentColor = ZbudgetSecondary,
+        containerColor = colorScheme.surface,
+        contentColor = colorScheme.onSurface,
         windowInsets = NavigationBarDefaults.windowInsets
     ) {
         bottomNavItems.forEach { item ->
             val selected = currentDestination
                 ?.hierarchy
-                ?.any { destination ->
-                    destination.route == item.route
-                } == true
+                ?.any { destination -> destination.route == item.route } == true
 
             NavigationBarItem(
                 selected = selected,
@@ -109,32 +84,32 @@ fun BottomBar(
                 },
                 alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = ZbudgetGreen,
-                    selectedTextColor = ZbudgetText,
-                    indicatorColor = ZbudgetGreenLight,
-                    unselectedIconColor = Color(0xFF8A948D),
-                    unselectedTextColor = Color(0xFF8A948D)
+                    selectedIconColor = colorScheme.primary,
+                    selectedTextColor = colorScheme.onSurface,
+                    indicatorColor = colorScheme.primaryContainer,
+                    unselectedIconColor = colorScheme.onSurfaceVariant,
+                    unselectedTextColor = colorScheme.onSurfaceVariant
                 )
             )
         }
     }
 }
 
-
 @Composable
 fun NavigationRailBar(
     currentDestination: NavDestination?,
     onNavigate: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     NavigationRail(
-        containerColor = ZbudgetCream
+        containerColor = colorScheme.surface,
+        contentColor = colorScheme.onSurface
     ) {
         bottomNavItems.forEach { item ->
             val selected = currentDestination
                 ?.hierarchy
-                ?.any { destination ->
-                    destination.route == item.route
-                } == true
+                ?.any { destination -> destination.route == item.route } == true
 
             NavigationRailItem(
                 selected = selected,
@@ -158,24 +133,24 @@ fun NavigationRailBar(
                 },
                 alwaysShowLabel = true,
                 colors = NavigationRailItemDefaults.colors(
-                    selectedIconColor = ZbudgetGreen,
-                    selectedTextColor = ZbudgetText,
-                    indicatorColor = ZbudgetGreenLight,
-                    unselectedIconColor = Color(0xFF8A948D),
-                    unselectedTextColor = Color(0xFF8A948D)
+                    selectedIconColor = colorScheme.primary,
+                    selectedTextColor = colorScheme.onSurface,
+                    indicatorColor = colorScheme.primaryContainer,
+                    unselectedIconColor = colorScheme.onSurfaceVariant,
+                    unselectedTextColor = colorScheme.onSurfaceVariant
                 )
             )
         }
     }
 }
 
-
-
 @Preview(showBackground = true)
 @Composable
 fun BottomBarPreview() {
-    BottomBar(
-        currentDestination = null,
-        onNavigate = {}
-    )
+    ZbudgetTheme {
+        BottomBar(
+            currentDestination = null,
+            onNavigate = {}
+        )
+    }
 }

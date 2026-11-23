@@ -5,8 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -32,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -53,23 +56,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.zbudget.ui.theme.ZbudgetCream
 import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetGreenLight
 import com.example.zbudget.ui.theme.ZbudgetRed
-import com.example.zbudget.ui.theme.ZbudgetText
+import com.example.zbudget.ui.theme.ZbudgetTheme
 
 @Composable
 fun ProfileScreen(
+    isDarkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
     onLogOut: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val profile by viewModel.uiState.collectAsState()
+
     var showEditDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember {
-        mutableStateOf(false)
-    }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var nameInput by remember { mutableStateOf("") }
 
     ProfileScreenContent(
@@ -89,7 +91,9 @@ fun ProfileScreen(
         onChangePassword = {
             viewModel.clearMessage()
             showPasswordDialog = true
-        }
+        },
+        isDarkTheme = isDarkTheme,
+        onDarkThemeChange = onDarkThemeChange
     )
 
     if (showEditDialog) {
@@ -111,7 +115,9 @@ fun ProfileScreen(
                     value = nameInput,
                     onValueChange = { nameInput = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Tên hiển thị") },
+                    label = {
+                        Text("Tên hiển thị")
+                    },
                     singleLine = true,
                     enabled = !profile.isLoading
                 )
@@ -161,6 +167,7 @@ fun ProfileScreen(
             }
         )
     }
+
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -176,14 +183,12 @@ fun ProfileScreen(
             title = {
                 Text(
                     text = "Xác nhận đăng xuất",
-                    fontWeight = FontWeight.Bold,
-                    color = ZbudgetText
+                    fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Text(
-                    text = "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?",
-                    color = ZbudgetText
+                    text = "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?"
                 )
             },
             confirmButton = {
@@ -208,11 +213,10 @@ fun ProfileScreen(
                 ) {
                     Text(
                         text = "Hủy",
-                        color = ZbudgetGreen
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
-            },
-            containerColor = ZbudgetCream
+            }
         )
     }
 }
@@ -250,7 +254,9 @@ private fun ChangePasswordDialog(
                     onValueChange = { currentPassword = it },
                     label = "Mật khẩu hiện tại",
                     visible = showCurrent,
-                    onToggleVisibility = { showCurrent = !showCurrent },
+                    onToggleVisibility = {
+                        showCurrent = !showCurrent
+                    },
                     enabled = !isLoading
                 )
 
@@ -259,7 +265,9 @@ private fun ChangePasswordDialog(
                     onValueChange = { newPassword = it },
                     label = "Mật khẩu mới",
                     visible = showNew,
-                    onToggleVisibility = { showNew = !showNew },
+                    onToggleVisibility = {
+                        showNew = !showNew
+                    },
                     enabled = !isLoading
                 )
 
@@ -268,20 +276,22 @@ private fun ChangePasswordDialog(
                     onValueChange = { confirmPassword = it },
                     label = "Xác nhận mật khẩu mới",
                     visible = showConfirm,
-                    onToggleVisibility = { showConfirm = !showConfirm },
+                    onToggleVisibility = {
+                        showConfirm = !showConfirm
+                    },
                     enabled = !isLoading
                 )
 
                 Text(
                     text = "Mật khẩu mới cần có ít nhất 6 ký tự.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = ZbudgetText.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 error?.let {
                     Text(
                         text = it,
-                        color = ZbudgetRed,
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -289,7 +299,7 @@ private fun ChangePasswordDialog(
                 successMessage?.let {
                     Text(
                         text = it,
-                        color = ZbudgetGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -297,7 +307,9 @@ private fun ChangePasswordDialog(
         },
         confirmButton = {
             if (successMessage != null) {
-                TextButton(onClick = onSuccessDismiss) {
+                TextButton(
+                    onClick = onSuccessDismiss
+                ) {
                     Text("Đóng")
                 }
             } else {
@@ -348,7 +360,9 @@ private fun PasswordField(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(label) },
+        label = {
+            Text(label)
+        },
         singleLine = true,
         enabled = enabled,
         visualTransformation = if (visible) {
@@ -357,7 +371,9 @@ private fun PasswordField(
             PasswordVisualTransformation()
         },
         trailingIcon = {
-            IconButton(onClick = onToggleVisibility) {
+            IconButton(
+                onClick = onToggleVisibility
+            ) {
                 Icon(
                     imageVector = if (visible) {
                         Icons.Default.VisibilityOff
@@ -377,6 +393,8 @@ private fun PasswordField(
 
 @Composable
 private fun ProfileScreenContent(
+    isDarkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
     displayName: String,
     email: String,
     isLoading: Boolean,
@@ -387,9 +405,10 @@ private fun ProfileScreenContent(
     onChangePassword: () -> Unit
 ) {
     val avatarLetter = displayName.firstOrNull()?.uppercase() ?: "U"
+    val colors = MaterialTheme.colorScheme
 
     Scaffold(
-        containerColor = ZbudgetCream,
+        containerColor = colors.background,
         topBar = {
             Row(
                 modifier = Modifier
@@ -397,12 +416,11 @@ private fun ProfileScreenContent(
                     .padding(horizontal = 20.dp, vertical = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Text(
                     text = "Tài khoản",
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ZbudgetText
+                    color = colors.onBackground
                 )
             }
         }
@@ -420,12 +438,12 @@ private fun ProfileScreenContent(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .background(ZbudgetGreenLight),
+                    .background(colors.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = avatarLetter,
-                    color = ZbudgetGreen,
+                    color = colors.primary,
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -437,7 +455,7 @@ private fun ProfileScreenContent(
                 text = displayName.ifBlank { "Người dùng" },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = ZbudgetText
+                color = colors.onBackground
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -445,14 +463,14 @@ private fun ProfileScreenContent(
             Text(
                 text = email,
                 style = MaterialTheme.typography.bodyMedium,
-                color = ZbudgetText.copy(alpha = 0.65f)
+                color = colors.onSurfaceVariant
             )
 
             if (isLoading) {
                 Spacer(modifier = Modifier.height(12.dp))
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = ZbudgetGreen
+                    color = colors.primary
                 )
             }
 
@@ -460,7 +478,7 @@ private fun ProfileScreenContent(
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = it,
-                    color = ZbudgetRed,
+                    color = colors.error,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -469,12 +487,19 @@ private fun ProfileScreenContent(
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = it,
-                    color = ZbudgetGreen,
+                    color = colors.primary,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            AppearanceOption(
+                isDarkTheme = isDarkTheme,
+                onDarkThemeChange = onDarkThemeChange
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             ProfileOption(
                 icon = Icons.Default.Edit,
@@ -501,7 +526,8 @@ private fun ProfileScreenContent(
                     .height(54.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ZbudgetRed
+                    containerColor = ZbudgetRed,
+                    contentColor = Color.White
                 )
             ) {
                 Icon(
@@ -534,7 +560,8 @@ private fun ProfileOption(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = ZbudgetGreen,
+            contentColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 1.dp
@@ -551,20 +578,22 @@ private fun ProfileOption(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(ZbudgetGreenLight),
+                    .background(Color.White.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = ZbudgetGreen
+                    tint = Color.White
                 )
             }
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = title,
-                    color = ZbudgetText,
+                    color = Color.White,
                     fontWeight = FontWeight.SemiBold
                 )
 
@@ -572,7 +601,7 @@ private fun ProfileOption(
 
                 Text(
                     text = subtitle,
-                    color = ZbudgetText.copy(alpha = 0.6f),
+                    color = Color.White.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -580,16 +609,85 @@ private fun ProfileOption(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = ZbudgetText.copy(alpha = 0.5f)
+                tint = Color.White.copy(alpha = 0.8f)
             )
         }
     }
 }
+@Composable
+private fun AppearanceOption(
+    isDarkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = ZbudgetGreen,
+            contentColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isDarkTheme) {
+                        Icons.Default.DarkMode
+                    } else {
+                        Icons.Default.LightMode
+                    },
+                    contentDescription = null,
+                    tint = Color.White
+                )
+            }
 
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Chế độ tối",
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Text(
+                    text = if (isDarkTheme) {
+                        "Đang sử dụng giao diện tối"
+                    } else {
+                        "Đang sử dụng giao diện sáng"
+                    },
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Switch(
+                checked = isDarkTheme,
+                onCheckedChange = onDarkThemeChange
+            )
+        }
+    }
+}
 @Preview(showBackground = true)
 @Composable
 private fun ProfileScreenPreview() {
-    MaterialTheme {
+    ZbudgetTheme {
         ProfileScreenContent(
             displayName = "Nguyen Van A",
             email = "nguyenvana@gmail.com",
@@ -598,7 +696,9 @@ private fun ProfileScreenPreview() {
             successMessage = null,
             onLogOut = {},
             onEditName = {},
-            onChangePassword = {}
+            onChangePassword = {},
+            isDarkTheme = false,
+            onDarkThemeChange = {}
         )
     }
 }

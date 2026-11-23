@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
@@ -41,6 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,17 +60,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.zbudget.data.model.Transaction
 import com.example.zbudget.data.model.TransactionCategories
+import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.ui.components.CategoryOption
 import com.example.zbudget.ui.components.CategorySelectionContent
 import com.example.zbudget.ui.components.TransactionRow
 import com.example.zbudget.ui.components.ZbudgetLoading
-import com.example.zbudget.ui.theme.ZbudgetCream
-import com.example.zbudget.ui.theme.ZbudgetGreen
-import com.example.zbudget.ui.theme.ZbudgetGreenDark
+import com.example.zbudget.ui.theme.ZbudgetTheme
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import com.example.zbudget.data.model.TransactionType
 
 
 @Composable
@@ -117,7 +114,6 @@ fun TransactionsScreenContent(
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
-    var showDateMenu by remember { mutableStateOf(false) }
     var showCategoryPicker by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -128,7 +124,6 @@ fun TransactionsScreenContent(
     val appliedFilter = state.appliedFilter
     val draftFilter = state.draftFilter
     val searchQuery = state.searchQuery
-    val categories = state.categories
 
     val activeFilters = buildList {
         if (appliedFilter.dateFilter != TransactionDateFilter.ALL) {
@@ -195,12 +190,12 @@ fun TransactionsScreenContent(
         }
     }
     Scaffold(
-        containerColor = ZbudgetCream,
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddClick,
-                containerColor = ZbudgetGreen,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(18.dp)
             ) {
                 Icon(
@@ -227,7 +222,7 @@ fun TransactionsScreenContent(
                     text = "Giao dịch",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = ZbudgetGreenDark
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 IconButton(
@@ -242,7 +237,7 @@ fun TransactionsScreenContent(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Tìm kiếm",
-                        tint = ZbudgetGreenDark
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -277,14 +272,14 @@ fun TransactionsScreenContent(
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isSelected) {
-                                ZbudgetGreen
+                                MaterialTheme.colorScheme.primary
                             } else {
-                                ZbudgetGreen.copy(alpha = 0.10f)
+                                MaterialTheme.colorScheme.surfaceVariant
                             },
                             contentColor = if (isSelected) {
-                                Color.White
+                                MaterialTheme.colorScheme.onPrimary
                             } else {
-                                ZbudgetGreenDark
+                                MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
                     ) {
@@ -310,7 +305,7 @@ fun TransactionsScreenContent(
                 Text(
                     text = "${transactions.size} giao dịch",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = ZbudgetGreenDark
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -324,9 +319,9 @@ fun TransactionsScreenContent(
                             imageVector = Icons.Default.Tune,
                             contentDescription = "Lọc giao dịch",
                             tint = if (appliedFilter != TransactionFilter()) {
-                                ZbudgetGreen
+                                MaterialTheme.colorScheme.primary
                             } else {
-                                ZbudgetGreenDark
+                                MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
                     }
@@ -338,12 +333,12 @@ fun TransactionsScreenContent(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Sort,
                                 contentDescription = null,
-                                tint = ZbudgetGreen
+                                tint = MaterialTheme.colorScheme.primary
                             )
 
                             Text(
                                 text = selectedSort.label,
-                                color = ZbudgetGreenDark
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
@@ -389,7 +384,7 @@ fun TransactionsScreenContent(
                 Text(
                     text = activeFilters.joinToString(" • "),
                     style = MaterialTheme.typography.bodySmall,
-                    color = ZbudgetGreenDark,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
@@ -419,7 +414,7 @@ fun TransactionsScreenContent(
 
                                 Text(
                                     text = "Đang tải giao dịch...",
-                                    color = ZbudgetGreenDark,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -454,7 +449,7 @@ fun TransactionsScreenContent(
                                     onClick = onRetryLoad,
                                     enabled = !state.isRefreshing,
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = ZbudgetGreen
+                                        containerColor = MaterialTheme.colorScheme.primary
                                     ),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
@@ -474,7 +469,7 @@ fun TransactionsScreenContent(
                                     .fillMaxWidth()
                                     .padding(top = 24.dp),
                                 shape = RoundedCornerShape(20.dp),
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.surface
                             ) {
                                 Column(
                                     modifier = Modifier.padding(24.dp),
@@ -484,7 +479,7 @@ fun TransactionsScreenContent(
                                         text = "Không tìm thấy giao dịch",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = ZbudgetGreenDark
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
 
                                     Spacer(modifier = Modifier.height(6.dp))
@@ -551,10 +546,9 @@ fun TransactionsScreenContent(
         ModalBottomSheet(
             onDismissRequest = {
                 showFilterSheet = false
-                showDateMenu = false
                 showCategoryPicker = false
             },
-            containerColor = ZbudgetCream
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             if (showCategoryPicker) {
                 CategorySelectionContent(
@@ -579,7 +573,7 @@ fun TransactionsScreenContent(
                         text = "Bộ lọc giao dịch",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = ZbudgetGreenDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -588,7 +582,7 @@ fun TransactionsScreenContent(
                         text = "Khoảng thời gian",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = ZbudgetGreenDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -667,12 +661,11 @@ fun TransactionsScreenContent(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
                     Text(
                         text = "Danh mục",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -680,7 +673,6 @@ fun TransactionsScreenContent(
                     OutlinedButton(
                         onClick = {
                             showCategoryPicker = true
-                            showDateMenu = false
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -703,7 +695,8 @@ fun TransactionsScreenContent(
                     Text(
                         text = "Khoảng tiền (VNĐ)",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -770,7 +763,6 @@ fun TransactionsScreenContent(
                         TextButton(
                             onClick = {
                                 onResetDraftFilter()
-                                showDateMenu = false
                                 showCategoryPicker = false
                             },
                             modifier = Modifier.weight(1f)
@@ -783,7 +775,6 @@ fun TransactionsScreenContent(
                                 if (!invalidRange) {
                                     onApplyFilter()
                                     showFilterSheet = false
-                                    showDateMenu = false
                                     showCategoryPicker = false
                                 }
                             },
@@ -791,7 +782,7 @@ fun TransactionsScreenContent(
                             modifier = Modifier.weight(2f),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = ZbudgetGreen
+                                containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
                             Text("Áp dụng")
@@ -802,6 +793,7 @@ fun TransactionsScreenContent(
         }
     }
 }
+
 @Composable
 fun DateFilterOption(
     title: String,
@@ -812,20 +804,19 @@ fun DateFilterOption(
     onClick: () -> Unit
 ) {
     Surface(
-        modifier = modifier
-            .clickable(onClick = onClick),
+        modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = if (selected) {
-            ZbudgetGreen.copy(alpha = 0.10f)
+            MaterialTheme.colorScheme.primaryContainer
         } else {
-            Color.White
+            MaterialTheme.colorScheme.surface
         },
         border = BorderStroke(
             width = if (selected) 1.5.dp else 1.dp,
             color = if (selected) {
-                ZbudgetGreen
+                MaterialTheme.colorScheme.primary
             } else {
-                Color.LightGray.copy(alpha = 0.4f)
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
             }
         )
     ) {
@@ -850,7 +841,7 @@ fun DateFilterOption(
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = "Đang chọn",
-                        tint = ZbudgetGreen
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -859,7 +850,11 @@ fun DateFilterOption(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = ZbudgetGreenDark
+                color = if (selected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
             )
 
             Text(
@@ -871,10 +866,11 @@ fun DateFilterOption(
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun TransactionScreenPreview() {
-    MaterialTheme {
+    ZbudgetTheme {
         TransactionsScreenContent(
             state = TransactionsUiState(),
             transactions = emptyList(),

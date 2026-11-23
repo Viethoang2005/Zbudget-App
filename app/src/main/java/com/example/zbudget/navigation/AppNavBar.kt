@@ -36,7 +36,10 @@ import com.example.zbudget.ui.transactions.TransactionsScreen
 import com.example.zbudget.ui.transactions.TransactionsViewModel
 
 @Composable
-fun AppNavBar() {
+fun AppNavBar(
+    isDarkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit
+) {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = hiltViewModel()
 
@@ -152,6 +155,8 @@ fun AppNavBar() {
 
                     composable(Screens.PROFILE) {
                         ProfileScreen(
+                            isDarkTheme = isDarkTheme,
+                            onDarkThemeChange = onDarkThemeChange,
                             onLogOut = {
                                 authViewModel.logout()
 

@@ -1,7 +1,7 @@
 
 package com.example.zbudget.ui.components
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -34,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.zbudget.data.model.TransactionCategories
+import com.example.zbudget.ui.theme.ZbudgetGreen
+import com.example.zbudget.ui.theme.ZbudgetTheme
 
 data class CategoryOption(
     val name: String,
@@ -63,7 +66,8 @@ fun CategorySelectionContent(
         Text(
             text = "Chọn danh mục",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
@@ -108,66 +112,66 @@ fun CategorySelectionContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(
-                    items = filteredCategories.distinctBy {it.name},
+                    items = filteredCategories.distinctBy { it.name },
                     key = { it.name }
                 ) { category ->
                     val isSelected = category.name == selectedCategory
 
-                    Column(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                color = if (isSelected) {
-                                    MaterialTheme.colorScheme.primaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(
-                                        alpha = 0.45f
-                                    )
-                                },
-                                shape = RoundedCornerShape(16.dp)
-                            )
                             .clickable {
                                 onCategorySelected(category.name)
-                            }
-                            .padding(
+                            },
+                        shape = RoundedCornerShape(16.dp),
+                        color = ZbudgetGreen,
+                        border = if (isSelected) {
+                            BorderStroke(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            null
+                        }
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(
                                 vertical = 16.dp,
                                 horizontal = 6.dp
                             ),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box {
-                            Text(
-                                text = category.icon,
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Đã chọn",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(start = 28.dp)
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = category.icon,
+                                    style = MaterialTheme.typography.headlineMedium
                                 )
-                            }
-                        }
 
-                        Text(
-                            text = category.name,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = if (isSelected) {
-                                FontWeight.Bold
-                            } else {
-                                FontWeight.Normal
-                            },
-                            color = if (isSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Đã chọn",
+                                        tint = androidx.compose.ui.graphics.Color.White,
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    )
+                                }
                             }
-                        )
+
+                            Text(
+                                text = category.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) {
+                                    FontWeight.Bold
+                                } else {
+                                    FontWeight.Normal
+                                },
+                                color = androidx.compose.ui.graphics.Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -206,7 +210,7 @@ fun CategorySelectionSheet(
 @Preview(showBackground = true)
 @Composable
 fun CategorySelectionContentPreview() {
-    MaterialTheme {
+    ZbudgetTheme {
         CategorySelectionContent(
             categories = TransactionCategories.expense,
             selectedCategory = "Ăn uống",
@@ -218,7 +222,7 @@ fun CategorySelectionContentPreview() {
 @Preview(showBackground = true)
 @Composable
 fun CategorySelectionSheetPreview() {
-    MaterialTheme {
+    ZbudgetTheme {
         CategorySelectionSheet(
             categories = TransactionCategories.expense,
             selectedCategory = "Ăn uống",

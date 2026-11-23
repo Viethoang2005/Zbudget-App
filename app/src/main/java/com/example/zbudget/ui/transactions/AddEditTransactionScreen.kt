@@ -65,7 +65,7 @@ import com.example.zbudget.data.model.TransactionType
 import com.example.zbudget.ui.components.CategoryOption
 import com.example.zbudget.ui.components.CategorySelectionSheet
 import com.example.zbudget.ui.components.ZbudgetLoading
-import com.example.zbudget.ui.theme.ZbudgetCream
+import com.example.zbudget.ui.theme.ZbudgetGreen
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -219,7 +219,7 @@ fun AddEditTransactionScreen(
         }
     }
     Scaffold(
-        containerColor = ZbudgetCream,
+        containerColor = colors.background,
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
@@ -233,14 +233,16 @@ fun AddEditTransactionScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Quay lại"
+                        contentDescription = "Quay lại",
+                        tint = colors.onSurface
                     )
                 }
 
                 Text(
                     text = if (transactionId == null) "Thêm giao dịch" else "Sửa giao dịch",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onBackground
                 )
             }
         },
@@ -289,7 +291,8 @@ fun AddEditTransactionScreen(
                         .height(54.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.primary
+                        containerColor = ZbudgetGreen,
+                        contentColor = Color.White
                     ),
                     enabled = !uiState.isSaving
                 ) {
@@ -538,7 +541,8 @@ private fun FormSection(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         content()

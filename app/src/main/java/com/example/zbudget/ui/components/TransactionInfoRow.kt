@@ -1,3 +1,4 @@
+
 package com.example.zbudget.ui.components
 
 import androidx.compose.foundation.background
@@ -22,8 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.zbudget.ui.theme.ZbudgetGreenDark
-import com.example.zbudget.ui.theme.ZbudgetGreenLight
+import com.example.zbudget.ui.theme.ZbudgetTheme
 
 @Composable
 fun TransactionInfoRow(
@@ -32,6 +32,8 @@ fun TransactionInfoRow(
     value: String,
     valueColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -43,7 +45,7 @@ fun TransactionInfoRow(
             modifier = Modifier
                 .size(42.dp)
                 .background(
-                    color = ZbudgetGreenLight,
+                    color = colors.primaryContainer,
                     shape = RoundedCornerShape(13.dp)
                 ),
             contentAlignment = Alignment.Center
@@ -51,7 +53,7 @@ fun TransactionInfoRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = ZbudgetGreenDark,
+                tint = colors.primary,
                 modifier = Modifier.size(21.dp)
             )
         }
@@ -63,7 +65,7 @@ fun TransactionInfoRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = colors.onSurfaceVariant
             )
 
             Text(
@@ -79,9 +81,11 @@ fun TransactionInfoRow(
 @Preview(showBackground = true)
 @Composable
 fun TransactionInfoRowPreview() {
-    TransactionInfoRow(
-        icon = Icons.Default.PersonPin,
-        label = "Nguoi dung",
-        value = "Viet Hoang"
-    )
+    ZbudgetTheme {
+        TransactionInfoRow(
+            icon = Icons.Default.PersonPin,
+            label = "Người dùng",
+            value = "Việt Hoàng"
+        )
+    }
 }
